@@ -272,7 +272,7 @@ const ReviewComponent = (review: Review) => {
           </div>
         </Dialog.Title>
         <Dialog.Description
-          className="mx-auto max-w-[80ch]"
+          className="mx-auto w-[fit-content]"
           dangerouslySetInnerHTML={{ __html: review.reviewHtml }}
         />
         <Dialog.Close>
