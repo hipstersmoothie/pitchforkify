@@ -279,25 +279,27 @@ const ReviewComponent = (review: Review) => {
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
       <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full">
         <Dialog.Title asChild className="text-center mt-6 mb-2">
-          <ArtistList review={review} className="text-2xl mb-2" />
-          <h2 className="font-semibold italic text-2xl mb-10">
-            {review.albumTitle}
-          </h2>
+          <div>
+            <ArtistList review={review} className="text-2xl mb-2" />
+            <h2 className="font-semibold italic text-2xl mb-10">
+              {review.albumTitle}
+            </h2>
 
-          <div className="flex items-center mx-8 mb-12 gap-6 md:gap-10 justify-center">
-            <div className="w-full max-h-[300px] max-w-[300px]">
-              <AlbumCover review={review} className="mb-2 border-gray-800" />
-              <div className="flex items-center gap-1 text-gray-300 text-xs uppercase">
-                <LabelList review={review} />
-                <span>{" • "}</span>
-                <span>{getYear(new Date(review.publishDate))}</span>
+            <div className="flex items-center mx-8 mb-12 gap-6 md:gap-10 justify-center">
+              <div className="w-full max-h-[300px] max-w-[300px]">
+                <AlbumCover review={review} className="mb-2 border-gray-800" />
+                <div className="flex items-center gap-1 text-gray-300 text-xs uppercase">
+                  <LabelList review={review} />
+                  <span>{" • "}</span>
+                  <span>{getYear(new Date(review.publishDate))}</span>
+                </div>
               </div>
+              <Score
+                isBig
+                review={review}
+                className="text-5xl border-[6px] w-28 h-28 border-white flex items-center justify-center"
+              />
             </div>
-            <Score
-              isBig
-              review={review}
-              className="text-5xl border-[6px] w-28 h-28 border-white flex items-center justify-center"
-            />
           </div>
         </Dialog.Title>
         <Dialog.Description
