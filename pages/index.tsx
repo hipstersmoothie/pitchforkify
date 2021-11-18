@@ -275,7 +275,7 @@ const ReviewComponent = (review: Review) => {
       </Dialog.Trigger>
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
       <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full">
-        <Dialog.Title className="text-center mt-6 mb-2">
+        <Dialog.Title asChild className="text-center mt-6 mb-2">
           <ArtistList review={review} className="text-2xl mb-2" />
           <h2 className="font-semibold italic text-2xl mb-10">
             {review.albumTitle}
