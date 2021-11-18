@@ -1,4 +1,5 @@
 import { useSession, signIn, signOut } from "next-auth/client";
+import Image from 'next/image'
 import makeClass from "clsx";
 
 const AccountButton = ({
@@ -26,10 +27,13 @@ export const Header = () => {
         <div className="flex gap-4">
           {session?.user && (
             <div className="flex items-center gap-4">
-              <img
+              <Image
                 src={session.user.image}
                 alt=""
-                className="h-10 w-10 rounded-full"
+                height={40}
+                width={40}
+                className="rounded-full"
+                layout="fixed"
               />
             </div>
           )}

@@ -29,7 +29,7 @@ const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
   const player = useRef<Spotify.Player>();
 
   useEffect(() => {
-    if (!session || player.current) {
+    if (!session?.accessToken || player.current) {
       return;
     }
 
@@ -45,11 +45,11 @@ const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
         name: DEVICE_NAME,
         volume: 1,
         getOAuthToken: (cb) => {
-          cb((session as any).accessToken);
+          cb(session.accessToken as string);
         },
       });
 
-      player.current.addListener("ready", ({ device_id, ...rest }) => {
+      player.current.addListener("ready", ({ device_id }) => {
         console.log("player ready");
         playerIdSet(device_id);
       });
@@ -172,7 +172,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
       )}
       {...props}
     >
-      <img src={review.cover} className="w-full" alt="" />
+      <Image src={review.cover} height={300} width={300} alt="" layout="responsive" />
       <PlayButton
         isPlaying={false}
         className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2  opacity-0 group-hover:block group-hover:opacity-100 transition-opacity"
@@ -206,9 +206,6 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 };
 
 const ReviewComponent = (review: Review) => {
-  const [session] = useSession();
-  const { playerId, player } = usePlayer();
-
   return (
     <Dialog.Root modal={true}>
       <Dialog.Trigger
@@ -333,6 +330,7 @@ const PlayerControls = () => {
     function pressSpace(e: KeyboardEvent) {
       if (e.key === " " && playerState.track) {
         player.togglePlay();
+        e.preventDefault();
       }
     }
 
@@ -372,11 +370,15 @@ const PlayerControls = () => {
   return (
     <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-2 grid-cols-3 shadow-lg border-t items-center">
       <div className="flex items-center gap-2 w-full">
-        <img
-          src={playerState.cover}
-          alt=""
-          className="h-20 ml-2 border border-gray-300"
-        />
+        <div className="ml-2 h-20 w-20 border border-gray-300">
+          <Image
+            src={playerState.cover}
+            alt=""
+            height={80}
+            width={80}
+            layout="fixed"
+          />
+        </div>
         <div className="w-full grid grid-cols-[1fr, auto]">
           <div className="font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
             {playerState.track}

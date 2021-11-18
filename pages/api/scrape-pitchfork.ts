@@ -50,8 +50,8 @@ async function parseReview($: CheerioAPI, el: Element) {
     cover: $(".review__artwork img", el).attr("src"),
     spotifyAlbum: items[0] || null,
     score: $reviewPage(".score").text(),
-    publishDate: $(".pub-date", el).attr('datetime'),
-    isBestNew: $('.review__artwork--with-notch', el).length > 0,
+    publishDate: $(".pub-date", el).attr("datetime"),
+    isBestNew: $(".review__artwork--with-notch", el).length > 0,
     labels: $reviewPage(".labels-list__item")
       .toArray()
       .map((label) => $(label).text()),
@@ -78,7 +78,10 @@ export async function scrapeReviews(page: number) {
   return reviews;
 }
 
-export default async (req: NextApiRequest, res: NextApiResponse) => {
+export default async function scrapePitchfork(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const reviews = await scrapeReviews(1);
   res.status(200).json(reviews);
-};
+}
