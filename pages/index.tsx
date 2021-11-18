@@ -64,6 +64,10 @@ const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
 
       player.current.connect();
     };
+
+    return () => {
+      player.current.disconnect();
+    };
   }, [session?.accessToken]);
 
   return (
@@ -240,8 +244,7 @@ const ReviewComponent = (review: Review) => {
       <Dialog.Trigger
         className="flex"
         asChild
-        // @ts-ignore
-        style={{ "-webkit-appearance": "none" }}
+        style={{ WebkitAppearance: "none" }}
       >
         <li className="mb-10 flex flex-col items-center text-center cursor-pointer">
           <AlbumCover

@@ -1,5 +1,5 @@
 module.exports = {
-  reactStrictMode: true,
+  reactStrictMode: process.env.NODE_ENV !== "development",
   images: {
     domains: [
       "i.scdn.co",
