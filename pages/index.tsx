@@ -2,7 +2,15 @@ import { useSession, signIn } from "next-auth/client";
 import Head from "next/head";
 import Image from "next/image";
 import makeClass from "clsx";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import SpotifyWebApi from "spotify-web-api-node";
 import * as Dialog from "@radix-ui/react-dialog";
 import getYear from "date-fns/getYear";
@@ -21,7 +29,7 @@ import { BestNewBadge } from "../components/icons/BestNewBadge";
 const DEVICE_NAME = "pitchforkify";
 
 const PlayerContext =
-  createContext<{ player: Spotify.Player; playerId }>(undefined);
+  createContext<{ player: Spotify.Player; playerId: string }>(undefined);
 
 const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
   const [session] = useSession();
@@ -65,9 +73,7 @@ const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const usePlayer = () => {
-  return useContext(PlayerContext);
-};
+const ReviewsContext = createContext<{ reviews: Review[] }>({ reviews: [] });
 
 interface PlayButtonProps
   extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
@@ -150,19 +156,55 @@ const Score = ({ review, className, ...props }: ScoreProps) => {
   );
 };
 
+const useSpotifyApi = () => {
+  const [session] = useSession();
+  const spotifyApi = useMemo(
+    () =>
+      new SpotifyWebApi({
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+        ...session,
+      }),
+    [session]
+  );
+
+  return spotifyApi;
+};
+
+const usePlayAlbum = () => {
+  const [session] = useSession();
+  const { playerId, player } = useContext(PlayerContext);
+  const spotifyApi = useSpotifyApi();
+
+  return useCallback(
+    async (review: Review) => {
+      if (!session) {
+        return signIn();
+      }
+
+      const {
+        body: { devices },
+      } = await spotifyApi.getMyDevices();
+      const appPlayer = devices.find((d) => d.name !== DEVICE_NAME);
+      const device_id = playerId || appPlayer.id;
+
+      spotifyApi
+        .play({ context_uri: review.spotifyAlbum.uri, device_id })
+        .then(() => {
+          // @ts-ignore
+          player.activateElement();
+        });
+    },
+    [player, playerId, session, spotifyApi]
+  );
+};
+
 interface AlbumCoverProps extends React.ComponentProps<"div"> {
   review: Review;
 }
 
 const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
-  const [session] = useSession();
-  const { playerId, player } = usePlayer();
-
-  const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-    ...session,
-  });
+  const playAlbum = usePlayAlbum();
 
   return (
     <div
@@ -172,33 +214,20 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
       )}
       {...props}
     >
-      <Image src={review.cover} height={300} width={300} alt="" layout="responsive" />
+      <Image
+        src={review.cover}
+        height={300}
+        width={300}
+        alt=""
+        layout="responsive"
+      />
       <PlayButton
         isPlaying={false}
         className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2  opacity-0 group-hover:block group-hover:opacity-100 transition-opacity"
         aria-label={`Play ${review.albumTitle}`}
-        onClick={async (e) => {
+        onClick={(e) => {
           e.stopPropagation();
-
-          if (!session) {
-            return signIn();
-          }
-
-          const {
-            body: { devices },
-          } = await spotifyApi.getMyDevices();
-          const appPlayer = devices.find((d) => d.name !== DEVICE_NAME);
-          const device_id = playerId || appPlayer.id;
-
-          spotifyApi
-            .play({
-              context_uri: review.spotifyAlbum.uri,
-              device_id,
-            })
-            .then(() => {
-              // @ts-ignore
-              player.activateElement();
-            });
+          playAlbum(review);
         }}
       />
     </div>
@@ -283,7 +312,9 @@ const ReviewComponent = (review: Review) => {
 };
 
 const PlayerControls = () => {
-  const { player } = usePlayer();
+  const playAlbum = usePlayAlbum();
+  const { reviews } = useContext(ReviewsContext);
+  const { player } = useContext(PlayerContext);
   const [currentTime, setCurrentTime] = useState(0);
   const [playerState, playerStateSet] = useState({
     playing: false,
@@ -292,6 +323,16 @@ const PlayerControls = () => {
     duration: 0,
     cover: "",
   });
+
+  const getAlbumFromOffset = useCallback(
+    (currentUri: string, offset: number) => {
+      const currentReview = reviews.findIndex(
+        (r) => r.spotifyAlbum.uri === currentUri
+      );
+      return reviews[currentReview + offset];
+    },
+    [reviews]
+  );
 
   useEffect(() => {
     if (!player) {
@@ -352,7 +393,15 @@ const PlayerControls = () => {
           return;
         }
 
-        setCurrentTime(s.position);
+        if (s.position <= playerState.duration) {
+          setCurrentTime(s.position);
+        } else if (s.track_window.next_tracks.length === 0) {
+          const nextAlbum = getAlbumFromOffset(s.context.uri, 1);
+
+          if (nextAlbum) {
+            playAlbum(nextAlbum);
+          }
+        }
       });
     }, 1000);
 
@@ -361,7 +410,35 @@ const PlayerControls = () => {
         clearInterval(interval);
       }
     };
-  }, [player]);
+  }, [getAlbumFromOffset, playAlbum, player, playerState.duration, reviews]);
+
+  const playPreviousTrack = useCallback(() => {
+    player.getCurrentState().then((s) => {
+      if (s?.track_window.previous_tracks.length === 0) {
+        const prevAlbum = getAlbumFromOffset(s.context.uri, -1);
+
+        if (prevAlbum) {
+          playAlbum(prevAlbum);
+        }
+      } else {
+        player.previousTrack();
+      }
+    });
+  }, [getAlbumFromOffset, playAlbum, player]);
+
+  const playNextTrack = useCallback(() => {
+    player.getCurrentState().then((s) => {
+      if (s?.track_window.next_tracks.length === 0) {
+        const nextAlbum = getAlbumFromOffset(s.context.uri, 1);
+
+        if (nextAlbum) {
+          playAlbum(nextAlbum);
+        }
+      } else {
+        player.nextTrack();
+      }
+    });
+  }, [getAlbumFromOffset, playAlbum, player]);
 
   if (!playerState.track) {
     return null;
@@ -392,7 +469,7 @@ const PlayerControls = () => {
       <div className="flex flex-col items-center">
         <div className="mb-2">
           <button
-            onClick={() => player.previousTrack()}
+            onClick={playPreviousTrack}
             className="text-gray-600 hover:text-gray-800 p-2"
           >
             <PrevIcon />
@@ -402,7 +479,7 @@ const PlayerControls = () => {
             onClick={() => player.togglePlay()}
           />
           <button
-            onClick={() => player.nextTrack()}
+            onClick={playNextTrack}
             className="text-gray-600 hover:text-gray-800 p-2"
           >
             <NextIcon />
@@ -475,17 +552,19 @@ export default function Home({ reviews }: HomeProps) {
 
       <Header />
 
-      <PlayerProvider>
-        <main className="pt-10 pb-32">
-          <ul className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto px-8">
-            {reviews.map((review) => (
-              <ReviewComponent key={review.albumTitle} {...review} />
-            ))}
-          </ul>
+      <ReviewsContext.Provider value={{ reviews }}>
+        <PlayerProvider>
+          <main className="pt-10 pb-32">
+            <ul className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto px-8">
+              {reviews.map((review) => (
+                <ReviewComponent key={review.albumTitle} {...review} />
+              ))}
+            </ul>
 
-          <PlayerControls />
-        </main>
-      </PlayerProvider>
+            <PlayerControls />
+          </main>
+        </PlayerProvider>
+      </ReviewsContext.Provider>
 
       {/* <footer className={styles.footer}>
         <a
