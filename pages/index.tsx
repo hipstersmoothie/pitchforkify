@@ -330,6 +330,20 @@ const PlayerControls = () => {
   }, [player]);
 
   useEffect(() => {
+    function pressSpace(e: KeyboardEvent) {
+      if (e.key === " " && playerState.track) {
+        player.togglePlay();
+      }
+    }
+
+    document.addEventListener("keydown", pressSpace);
+
+    return () => {
+      document.removeEventListener("keydown", pressSpace);
+    };
+  }, [playerState.track, player]);
+
+  useEffect(() => {
     const interval = setInterval(() => {
       if (!player) {
         return;
