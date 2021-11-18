@@ -1,0 +1,59 @@
+.sr-only,
+.end-mark,
+.review-detail__featured-tracks {
+  display: none;
+}
+
+.review-detail__abstract {
+  @apply text-lg md:text-xl my-10 mx-4 text-gray-200;
+}
+
+body {
+  font-family: Walfork, Walsheim, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.contents p {
+  @apply md:text-lg my-4;
+}
+
+.detail__abstract,
+.contents {
+  @apply leading-8 mx-4;
+  font-family: Tiempos, Georgia, serif;
+}
+
+.contents a {
+  @apply border-b-2 border-[#ff3530];
+}
+
+.bestNew {
+  @apply overflow-hidden;
+}
+
+.bestNew::before {
+  content: "";
+  position: absolute;
+  z-index: 15;
+  width: 6rem;
+  height: 3em;
+  background: #fff;
+  transform: rotate(45deg);
+  border: 1px solid transparent;
+  border-bottom-color: #eee;
+  top: -1rem;
+  right: -31px;
+}
+
+.bestNew::after {
+  content: "";
+  display: block;
+  background: url(/best-new-badge.svg) no-repeat 100% 0;
+  background-size: 3rem 3rem;
+  line-height: 1;
+  width: 4rem;
+  height: 4rem;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+}
