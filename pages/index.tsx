@@ -25,6 +25,8 @@ import { PrevIcon } from "../components/icons/PrevIcon";
 import { NextIcon } from "../components/icons/NextIcon";
 import { CloseIcon } from "../components/icons/CloseIcon";
 import { BestNewBadge } from "../components/icons/BestNewBadge";
+import { UnfilledHeartIcon } from "../components/icons/UnfilledHeartIcon";
+import { HeartIcon } from "../components/icons/HeartIcon";
 
 const DEVICE_NAME = "pitchforkify";
 
@@ -317,6 +319,7 @@ const ReviewComponent = (review: Review) => {
 };
 
 const PlayerControls = () => {
+  const spotifyApi = useSpotifyApi();
   const playAlbum = usePlayAlbum();
   const { reviews } = useContext(ReviewsContext);
   const { player } = useContext(PlayerContext);
@@ -327,6 +330,7 @@ const PlayerControls = () => {
     track: "",
     duration: 0,
     cover: "",
+    isSaved: false,
   });
 
   const getAlbumFromOffset = useCallback(
@@ -344,10 +348,15 @@ const PlayerControls = () => {
       return;
     }
 
-    const playerStateChanged = (newState: Spotify.PlaybackState) => {
+    const playerStateChanged = async (newState: Spotify.PlaybackState) => {
       if (!newState) {
         return;
       }
+
+      const trackId = newState.track_window.current_track.id;
+      const {
+        body: [isSaved],
+      } = await spotifyApi.containsMySavedTracks([trackId]);
 
       setCurrentTime(newState.position);
       playerStateSet({
@@ -358,6 +367,7 @@ const PlayerControls = () => {
         track: newState.track_window.current_track.name,
         duration: newState.duration,
         cover: newState.track_window.current_track.album.images[1].url,
+        isSaved,
       });
     };
 
@@ -445,14 +455,30 @@ const PlayerControls = () => {
     });
   }, [getAlbumFromOffset, playAlbum, player]);
 
+  const toggleFavorite = useCallback(async () => {
+    const s = await player.getCurrentState();
+    const trackId = s.track_window.current_track.id;
+    const {
+      body: [isSaved],
+    } = await spotifyApi.containsMySavedTracks([trackId]);
+
+    if (isSaved) {
+      await spotifyApi.removeFromMySavedTracks([trackId]);
+    } else {
+      await spotifyApi.addToMySavedTracks([trackId]);
+    }
+
+    playerStateSet({ ...playerState, isSaved });
+  }, [player, playerState, spotifyApi]);
+
   if (!playerState.track) {
     return null;
   }
 
   return (
-    <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-2 grid-cols-3 shadow-lg border-t items-center">
-      <div className="flex items-center gap-2 w-full">
-        <div className="ml-2 h-20 w-20 border border-gray-300">
+    <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-6 grid-cols-3 shadow-lg border-t items-center">
+      <div className="ml-2 flex items-center w-full">
+        <div className="h-20 w-20 border mr-4 border-gray-300 hidden md:block">
           <Image
             src={playerState.cover}
             alt=""
@@ -461,7 +487,7 @@ const PlayerControls = () => {
             layout="fixed"
           />
         </div>
-        <div className="w-full grid grid-cols-[1fr, auto]">
+        <div className="min-w-0 mr-6">
           <div className="font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
             {playerState.track}
           </div>
@@ -469,6 +495,12 @@ const PlayerControls = () => {
             {playerState.artist}
           </div>
         </div>
+        <button
+          onClick={toggleFavorite}
+          style={{ fill: playerState.isSaved ? "red" : undefined }}
+        >
+          {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
+        </button>
       </div>
 
       <div className="flex flex-col items-center">
