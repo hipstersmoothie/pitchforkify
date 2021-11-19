@@ -241,7 +241,6 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 };
 
 const ReviewComponent = (review: Review) => {
-  console.log(review)
   return (
     <Dialog.Root modal={true}>
       <Dialog.Trigger
@@ -577,6 +576,14 @@ interface HomeProps {
 }
 
 export default function Home({ reviews }: HomeProps) {
+  const [session] = useSession();
+
+  useEffect(() => {
+    if (session?.error === "RefreshAccessTokenError") {
+      signIn();
+    }
+  }, [session]);
+
   return (
     <div className="">
       <Head>
