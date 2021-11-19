@@ -1,6 +1,9 @@
 import { useSession, signIn, signOut } from "next-auth/client";
-import Image from 'next/image'
+import Image from "next/image";
 import makeClass from "clsx";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+
+import logo from "../public/pitchforkify.png";
 
 const AccountButton = ({
   className,
@@ -9,7 +12,7 @@ const AccountButton = ({
   <div
     className={makeClass(
       className,
-      "rounded px-4 h-10 cursor-pointer text-white bg-[#1db954] hover:bg-green-600 active:bg-green-700",
+      "rounded px-4 h-10 cursor-pointer border border-gray-300 hover:bg-gray-100 active:bg-gray-200",
       "flex items-center justify-center"
     )}
     {...props}
@@ -22,24 +25,38 @@ export const Header = () => {
   return (
     <div className="h-16 w-full border-b border-gray-200 flex items-center">
       <div className="max-w-6xl px-8 w-full mx-auto flex justify-between items-center">
-        <span className="font-bold">pitchforkify</span>
+        <div className="flex items-center">
+          <span className="w-10 h-10 mr-4">
+            <Image src={logo} alt="pitchforkify" />
+          </span>
+          <span className="font-bold product-name text-lg">Pitchforkify</span>
+        </div>
 
         <div className="flex gap-4">
-          {session?.user && (
-            <div className="flex items-center gap-4">
-              <Image
-                src={session.user.image}
-                alt=""
-                height={40}
-                width={40}
-                className="rounded-full"
-                layout="fixed"
-              />
-            </div>
-          )}
-
           {session ? (
-            <AccountButton onClick={() => signOut()}>Sign out</AccountButton>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger>
+                <div className="flex items-center gap-4">
+                  <Image
+                    src={session.user.image}
+                    alt=""
+                    height={40}
+                    width={40}
+                    className="rounded-full"
+                    layout="fixed"
+                  />
+                </div>
+              </DropdownMenu.Trigger>
+
+              <DropdownMenu.Content
+                className="border border-gray-400 rounded "
+                sideOffset={10}
+              >
+                <DropdownMenu.Item className="px-4 py-2">
+                  <button onClick={() => signOut()}>Sign out</button>
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Root>
           ) : (
             <AccountButton onClick={() => signIn()}>Sign in</AccountButton>
           )}
