@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity"]
+}
+
+datasource db {
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
+  referentialIntegrity = "prisma"
+}
+
+model Review {
+  id Int @id @default(autoincrement())
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  albumTitle   String
+  reviewHtml   String           @db.Text
+  cover        String
+  spotifyAlbum String
+  score        Float
+  publishDate  String
+  isBestNew    Boolean
+  labels       LabelOnReview[]
+  artists      ArtistOnReview[]
+  genres       GenreOnReview[]
+}
+
+model Label {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  reviews LabelOnReview[]
+}
+
+model LabelOnReview {
+  review   Review @relation(fields: [reviewId], references: [id])
+  reviewId Int
+
+  label   Label @relation(fields: [labelId], references: [id])
+  labelId Int
+
+  @@id([reviewId, labelId])
+}
+
+model Artist {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  reviews ArtistOnReview[]
+}
+
+model ArtistOnReview {
+  review   Review @relation(fields: [reviewId], references: [id])
+  reviewId Int
+
+  artist   Artist @relation(fields: [artistId], references: [id])
+  artistId Int
+
+  @@id([reviewId, artistId])
+}
+
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  reviews GenreOnReview[]
+}
+
+model GenreOnReview {
+  review   Review @relation(fields: [reviewId], references: [id])
+  reviewId Int
+
+  genre   Genre @relation(fields: [genreId], references: [id])
+  genreId Int
+
+  @@id([reviewId, genreId])
+}

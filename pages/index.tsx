@@ -17,7 +17,6 @@ import getYear from "date-fns/getYear";
 import format from "date-fns/format";
 
 import { Header } from "../components/Header";
-import { Review, scrapeReviews } from "./api/scrape-pitchfork";
 import { formatTime } from "../utils/formatTime";
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { PauseIcon } from "../components/icons/PauseIcon";
@@ -27,6 +26,7 @@ import { CloseIcon } from "../components/icons/CloseIcon";
 import { BestNewBadge } from "../components/icons/BestNewBadge";
 import { UnfilledHeartIcon } from "../components/icons/UnfilledHeartIcon";
 import { HeartIcon } from "../components/icons/HeartIcon";
+import { getReviews, Review } from "./api/reviews";
 
 const DEVICE_NAME = "pitchforkify";
 
@@ -113,7 +113,7 @@ const ArtistList = ({ review, ...props }: ArtistListProps) => {
           className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
           key={`${review.albumTitle}-${artist}`}
         >
-          {artist}
+          {artist.artist.name}
         </li>
       ))}
     </ul>
@@ -132,7 +132,7 @@ const LabelList = ({ review, className, ...props }: LabelListProps) => {
           className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
           key={`${review.albumTitle}-${label}`}
         >
-          {label}
+          {label.label.name}
         </li>
       ))}
     </ul>
@@ -156,7 +156,7 @@ const Score = ({ review, className, ...props }: ScoreProps) => {
         )}
         {...props}
       >
-        {review.score}
+        {review.score.toFixed(1)}
       </div>
     </div>
   );
@@ -195,7 +195,7 @@ const usePlayAlbum = () => {
       const device_id = playerId || appPlayer.id;
 
       spotifyApi
-        .play({ context_uri: review.spotifyAlbum.uri, device_id })
+        .play({ context_uri: review.spotifyAlbum, device_id })
         .then(() => {
           // @ts-ignore
           player.activateElement();
@@ -241,6 +241,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 };
 
 const ReviewComponent = (review: Review) => {
+  console.log(review)
   return (
     <Dialog.Root modal={true}>
       <Dialog.Trigger
@@ -264,7 +265,7 @@ const ReviewComponent = (review: Review) => {
                 className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
                 key={`${review.albumTitle}-${genre}`}
               >
-                {genre}
+                {genre.genre.name}
               </li>
             ))}
           </ul>
@@ -336,7 +337,7 @@ const PlayerControls = () => {
   const getAlbumFromOffset = useCallback(
     (currentUri: string, offset: number) => {
       const currentReview = reviews.findIndex(
-        (r) => r.spotifyAlbum.uri === currentUri
+        (r) => r.spotifyAlbum === currentUri
       );
       return reviews[currentReview + offset];
     },
@@ -620,7 +621,7 @@ export default function Home({ reviews }: HomeProps) {
 }
 
 export async function getStaticProps() {
-  const reviews = await scrapeReviews(1);
+  const reviews = await getReviews();
 
   return {
     props: {

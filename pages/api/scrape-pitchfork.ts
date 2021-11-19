@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import cheerio, { CheerioAPI, Element } from "cheerio";
 import fetch from "isomorphic-fetch";
 import SpotifyWebApi from "spotify-web-api-node";
+import prisma from "../../utils/primsa";
 
 const rootUrl = "https://pitchfork.com";
 
@@ -35,36 +36,35 @@ async function parseReview($: CheerioAPI, el: Element) {
   const albumTitle = $(".review__title-album", el).text();
   const artists = $(".review__title-artist li", el)
     .toArray()
-    .map((artist) => $(artist).text());
+    .map((artist) => ({ name: $(artist).text() }));
 
   const {
     body: {
       albums: { items },
     },
-  } = await spotifyApi.search(`${artists[0]} ${albumTitle.replace("EP", "")}`, [
-    "album",
-  ]);
+  } = await spotifyApi.search(
+    `${artists[0].name} ${albumTitle.replace("EP", "")}`,
+    ["album"]
+  );
 
   return {
     albumTitle: $(".review__title-album", el).text(),
     cover: $(".review__artwork img", el).attr("src"),
-    spotifyAlbum: items[0] || null,
-    score: $reviewPage(".score").text(),
+    spotifyAlbum: items[0].uri || null,
+    score: Number($reviewPage(".score").text()),
     publishDate: $(".pub-date", el).attr("datetime"),
     isBestNew: $(".review__artwork--with-notch", el).length > 0,
     labels: $reviewPage(".labels-list__item")
       .toArray()
-      .map((label) => $(label).text()),
+      .map((label) => ({ name: $(label).text() })),
     artists,
     genres: $(".genre-list__item", el)
       .toArray()
-      .map((genre) => $(genre).text()),
+      .map((genre) => ({ name: $(genre).text() })),
     reviewHtml: $reviewPage(".review-detail__article-content").html(),
   };
 }
 
-type UnPromisify<T> = T extends Promise<infer U> ? U : T;
-export type Review = UnPromisify<ReturnType<typeof parseReview>>;
 
 export async function scrapeReviews(page: number) {
   await setupSpotifyApi();
@@ -83,5 +83,29 @@ export default async function scrapePitchfork(
   res: NextApiResponse
 ) {
   const reviews = await scrapeReviews(1);
-  res.status(200).json(reviews);
+  const reviewCreation = reviews.map((r) => ({
+    ...r,
+    labels: { create: r.labels.map((l) => ({ label: { create: l } })) },
+    artists: { create: r.artists.map((a) => ({ artist: { create: a } })) },
+    genres: { create: r.genres.map((g) => ({ genre: { create: g } })) },
+  }));
+
+  await Promise.all(
+    reviewCreation.map(async (data) => {
+      const review = await prisma.review.findFirst({
+        where: {
+          albumTitle: data.albumTitle,
+          publishDate: data.publishDate,
+        },
+      });
+
+      if (!review) {
+        await prisma.review.create({
+          data,
+        });
+      }
+    })
+  );
+
+  res.status(200).json(true);
 }
