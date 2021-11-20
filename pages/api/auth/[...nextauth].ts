@@ -1,6 +1,7 @@
 import NextAuth, { User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import Providers from "next-auth/providers";
+import SpotifyWebApi from "spotify-web-api-node";
 
 /**
  * Takes a token, and returns a new token with updated
@@ -9,37 +10,25 @@ import Providers from "next-auth/providers";
  */
 async function refreshAccessToken(token: JWT) {
   try {
-    const response = await fetch(
-      "https://accounts.spotify.com/api/token",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Authorization:
-            "Basic " +
-            Buffer.from(
-              `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-            ).toString("base64"),
-        },
-        body: new URLSearchParams({
-          client_id: process.env.SPOTIFY_CLIENT_ID,
-          grant_type: "refresh_token",
-          refresh_token: token.refreshToken as string,
-        }),
-      }
-    );
+    const spotifyApi = new SpotifyWebApi({
+      clientId: process.env.SPOTIFY_CLIENT_ID,
+      clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+    });
 
-    const refreshedTokens = await response.json();
+    spotifyApi.setAccessToken(token.accessToken as string);
+    spotifyApi.setRefreshToken(token.refreshToken as string);
 
-    if (!response.ok) {
-      throw refreshedTokens;
+    const { body: newTokens } = await spotifyApi.refreshAccessToken();
+
+    if (!newTokens.access_token) {
+      throw new Error("Couldn't refresh access token!");
     }
 
     return {
       ...token,
-      accessToken: refreshedTokens.access_token,
-      accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
-      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+      accessToken: newTokens.access_token,
+      accessTokenExpires: Date.now() + newTokens.expires_in * 1000,
+      refreshToken: newTokens.refresh_token ?? token.refreshToken,
     };
   } catch (error) {
     return {
