@@ -120,9 +120,9 @@ export async function scrapeReviews(page: number) {
 
   const reviewCreation = reviews.map((r) => ({
     ...r,
-    labels: { create: r.labels.map((l) => ({ label: { create: l } })) },
-    artists: { create: r.artists.map((a) => ({ artist: { create: a } })) },
-    genres: { create: r.genres.map((g) => ({ genre: { create: g } })) },
+    labels: { create: r.labels.map((l) => ({ label: { connectOrCreate: l } })) },
+    artists: { create: r.artists.map((a) => ({ artist: { connectOrCreate: a } })) },
+    genres: { create: r.genres.map((g) => ({ genre: { connectOrCreate: g } })) },
   }));
 
   await Promise.all(
