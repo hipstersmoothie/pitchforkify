@@ -42,6 +42,13 @@ async function searchAlbums(artist: string, album: string) {
 
     return items;
   } catch (error) {
+    if (error.code === "ECONNRESET") {
+      console.log("Errors with spotify. Waiting...")
+      await sleep(30 * 1000);
+      return searchAlbums(artist, album);
+    }
+
+    console.log(error.code);
     console.log(error);
     throw error;
   }
@@ -125,6 +132,10 @@ export async function scrapeReviews(page: number) {
           albumTitle: data.albumTitle,
           publishDate: data.publishDate,
         },
+        select: {
+          id: true,
+          spotifyAlbum: true
+        }
       });
 
       if (!review) {
