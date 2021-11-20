@@ -1,4 +1,5 @@
 import { useSession, signIn } from "next-auth/client";
+import { GetServerSideProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import makeClass from "clsx";
@@ -15,6 +16,7 @@ import SpotifyWebApi from "spotify-web-api-node";
 import * as Dialog from "@radix-ui/react-dialog";
 import getYear from "date-fns/getYear";
 import format from "date-fns/format";
+import { useInfiniteQuery } from "react-query";
 
 import { Header } from "../components/Header";
 import { formatTime } from "../utils/formatTime";
@@ -27,6 +29,8 @@ import { BestNewBadge } from "../components/icons/BestNewBadge";
 import { UnfilledHeartIcon } from "../components/icons/UnfilledHeartIcon";
 import { HeartIcon } from "../components/icons/HeartIcon";
 import { getReviews, Review } from "./api/reviews";
+import useIntersectionObserver from "../utils/useIntersectionObserver";
+import { LoadingLogoIcon } from "../components/icons/LoadingLogo";
 
 const DEVICE_NAME = "pitchforkify";
 
@@ -476,7 +480,7 @@ const PlayerControls = () => {
   }
 
   return (
-    <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-6 grid-cols-3 shadow-lg border-t items-center">
+    <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-6 grid-cols-3 shadow-lg border-t items-center z-50">
       <div className="ml-2 flex items-center w-full">
         <div className="h-20 w-20 border mr-4 border-gray-300 hidden md:block">
           <Image
@@ -573,16 +577,46 @@ const PlayerControls = () => {
 
 interface HomeProps {
   reviews: Review[];
+  page: number;
 }
 
-export default function Home({ reviews }: HomeProps) {
+export default function Home({ reviews, page }: HomeProps) {
   const [session] = useSession();
+  const bottomRef = useRef<HTMLDivElement>();
+  const {
+    data,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery(
+    "reviews",
+    async ({ pageParam }: { pageParam?: number }) => {
+      console.log("DEBUG2", { pageParam });
+      const res = await fetch("/api/reviews?page=" + pageParam);
+      const data = await res.json();
+      return { pageParam, reviews: data as Review[] };
+    },
+    {
+      initialData: {
+        pages: [{ pageParam: page, reviews: reviews }],
+        pageParams: [page],
+      },
+      getNextPageParam: ({ pageParam }) => pageParam + 1,
+    }
+  );
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
       signIn();
     }
   }, [session]);
+
+  useIntersectionObserver({
+    target: bottomRef,
+    onIntersect: fetchNextPage,
+    enabled: hasNextPage,
+    rootMargin: "50%",
+  });
 
   return (
     <div className="">
@@ -601,10 +635,21 @@ export default function Home({ reviews }: HomeProps) {
         <PlayerProvider>
           <main className="pt-10 pb-32">
             <ul className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto px-8">
-              {reviews.map((review) => (
-                <ReviewComponent key={review.albumTitle} {...review} />
-              ))}
+              {data.pages.map((page) =>
+                page.reviews.map((review) => (
+                  <ReviewComponent key={review.albumTitle} {...review} />
+                ))
+              )}
             </ul>
+
+            <div
+              ref={bottomRef}
+              className="flex items-center w-full text-center justify-center"
+            >
+              <span className=" text-xl my-12 font-medium">
+                {isFetchingNextPage && <LoadingLogoIcon />}
+              </span>
+            </div>
 
             <PlayerControls />
           </main>
@@ -627,13 +672,11 @@ export default function Home({ reviews }: HomeProps) {
   );
 }
 
-export async function getStaticProps() {
-  const reviews = await getReviews();
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const page = context.query.page ? Number(context.query.page) : 1;
+  const reviews = await getReviews(page);
 
   return {
-    props: {
-      reviews,
-    },
-    revalidate: 60 * 60 * 24,
+    props: { reviews, page },
   };
-}
+};

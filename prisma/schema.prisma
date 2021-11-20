@@ -19,9 +19,9 @@ model Review {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   albumTitle   String
-  reviewHtml   String           @db.Text
-  cover        String
-  spotifyAlbum String
+  reviewHtml   String           @db.MediumText
+  cover        String           @db.VarChar(400)
+  spotifyAlbum String?
   score        Float
   publishDate  String
   isBestNew    Boolean

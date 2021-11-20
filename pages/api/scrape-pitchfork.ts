@@ -50,8 +50,8 @@ async function parseReview($: CheerioAPI, el: Element) {
   return {
     albumTitle: $(".review__title-album", el).text(),
     cover: $(".review__artwork img", el).attr("src"),
-    spotifyAlbum: items[0].uri || null,
-    score: Number($reviewPage(".score").text()),
+    spotifyAlbum: items[0]?.uri || null,
+    score: Number($reviewPage(".score").first().text()),
     publishDate: $(".pub-date", el).attr("datetime"),
     isBestNew: $(".review__artwork--with-notch", el).length > 0,
     labels: $reviewPage(".labels-list__item")
@@ -61,12 +61,12 @@ async function parseReview($: CheerioAPI, el: Element) {
     genres: $(".genre-list__item", el)
       .toArray()
       .map((genre) => ({ name: $(genre).text() })),
-    reviewHtml: $reviewPage(".review-detail__article-content").html(),
+    reviewHtml: $reviewPage(".review-detail__article-content").first().html(),
   };
 }
 
-
 export async function scrapeReviews(page: number) {
+  console.log({ page });
   await setupSpotifyApi();
 
   const $ = await getPage(getReviewPageUrl(page));
@@ -75,14 +75,6 @@ export async function scrapeReviews(page: number) {
     reviewsHtml.toArray().map((review) => parseReview($, review))
   );
 
-  return reviews;
-}
-
-export default async function scrapePitchfork(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const reviews = await scrapeReviews(1);
   const reviewCreation = reviews.map((r) => ({
     ...r,
     labels: { create: r.labels.map((l) => ({ label: { create: l } })) },
@@ -100,12 +92,28 @@ export default async function scrapePitchfork(
       });
 
       if (!review) {
-        await prisma.review.create({
-          data,
-        });
+        console.log(
+          `Added: "${data.albumTitle}" by ${data.artists.create
+            .map((a) => a.artist.create.name)
+            .join(", ")}`
+        );
+        try {
+          await prisma.review.create({
+            data,
+          });
+        } catch (error) {
+          console.log(data)
+          throw error
+        }
       }
     })
   );
+}
 
+export default async function scrapePitchfork(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  await scrapeReviews(1);
   res.status(200).json(true);
 }
