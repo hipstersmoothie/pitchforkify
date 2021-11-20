@@ -3,6 +3,7 @@ import cheerio, { CheerioAPI, Element } from "cheerio";
 import fetch from "isomorphic-fetch";
 import SpotifyWebApi from "spotify-web-api-node";
 import prisma from "../../utils/primsa";
+import { sleep } from "../../utils/sleep";
 
 const rootUrl = "https://pitchfork.com";
 
@@ -29,39 +30,74 @@ async function getPage(url: string) {
   return cheerio.load(html);
 }
 
-async function parseReview($: CheerioAPI, el: Element) {
-  const $reviewPage = await getPage(
-    `${rootUrl}${$(".review__link", el).attr("href")}`
-  );
-  const albumTitle = $(".review__title-album", el).text();
-  const artists = $(".review__title-artist li", el)
-    .toArray()
-    .map((artist) => ({ name: $(artist).text() }));
+async function searchAlbums(artist: string, album: string) {
+  try {
+    const {
+      body: {
+        albums: { items },
+      },
+    } = await spotifyApi.search(`${artist} ${album.replace("EP", "")}`, [
+      "album",
+    ]);
 
-  const {
-    body: {
-      albums: { items },
-    },
-  } = await spotifyApi.search(
-    `${artists[0].name} ${albumTitle.replace("EP", "")}`,
-    ["album"]
+    return items;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+interface ParsedReview {
+  albumTitle: string;
+  cover: string;
+  spotifyAlbum: string;
+  score: number;
+  publishDate: string;
+  isBestNew: boolean;
+  labels: { name: string }[];
+  artists: { name: string }[];
+  genres: { name: string }[];
+  reviewHtml: string;
+}
+
+async function parseReview(
+  $reviewPage: CheerioAPI,
+  reviewEl: Element
+): Promise<ParsedReview> {
+  const $reviewPagee = await getPage(
+    `${rootUrl}${$reviewPage(".review__link", reviewEl).attr("href")}`
   );
+  const reviewHtml = $reviewPagee(".review-detail__article-content")
+    .first()
+    .html();
+
+  if (!reviewHtml) {
+    console.log("Throttled by Pitchfork. Waiting...");
+    await sleep(30 * 1000);
+    return parseReview($reviewPage, reviewEl);
+  }
+
+  const albumTitle = $reviewPage(".review__title-album", reviewEl).text();
+  const artists = $reviewPage(".review__title-artist li", reviewEl)
+    .toArray()
+    .map((artist) => ({ name: $reviewPage(artist).text() }));
+  const albums = await searchAlbums(artists[0].name, albumTitle);
 
   return {
-    albumTitle: $(".review__title-album", el).text(),
-    cover: $(".review__artwork img", el).attr("src"),
-    spotifyAlbum: items[0]?.uri || null,
-    score: Number($reviewPage(".score").first().text()),
-    publishDate: $(".pub-date", el).attr("datetime"),
-    isBestNew: $(".review__artwork--with-notch", el).length > 0,
-    labels: $reviewPage(".labels-list__item")
+    albumTitle: $reviewPage(".review__title-album", reviewEl).text(),
+    cover: $reviewPage(".review__artwork img", reviewEl).attr("src"),
+    spotifyAlbum: albums[0]?.uri || null,
+    score: Number($reviewPagee(".score").first().text()),
+    publishDate: $reviewPage(".pub-date", reviewEl).attr("datetime"),
+    isBestNew: $reviewPage(".review__artwork--with-notch", reviewEl).length > 0,
+    labels: $reviewPagee(".labels-list__item")
       .toArray()
-      .map((label) => ({ name: $(label).text() })),
+      .map((label) => ({ name: $reviewPage(label).text() })),
     artists,
-    genres: $(".genre-list__item", el)
+    genres: $reviewPage(".genre-list__item", reviewEl)
       .toArray()
-      .map((genre) => ({ name: $(genre).text() })),
-    reviewHtml: $reviewPage(".review-detail__article-content").first().html(),
+      .map((genre) => ({ name: $reviewPage(genre).text() })),
+    reviewHtml,
   };
 }
 
@@ -95,16 +131,31 @@ export async function scrapeReviews(page: number) {
         console.log(
           `Added: "${data.albumTitle}" by ${data.artists.create
             .map((a) => a.artist.create.name)
-            .join(", ")}`
+            .join(", ")}`,
+          { hasSpotify: Boolean(data.spotifyAlbum) }
         );
         try {
           await prisma.review.create({
             data,
           });
         } catch (error) {
-          console.log(data)
-          throw error
+          console.log(data);
+          throw error;
         }
+      } else if (!review.spotifyAlbum && data.spotifyAlbum) {
+        console.log(
+          `Updated: "${data.albumTitle}" by ${data.artists.create
+            .map((a) => a.artist.create.name)
+            .join(", ")}`
+        );
+        await prisma.review.update({
+          where: {
+            id: review.id,
+          },
+          data: {
+            spotifyAlbum: data.spotifyAlbum,
+          },
+        });
       }
     })
   );
