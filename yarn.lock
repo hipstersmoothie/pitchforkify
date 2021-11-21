@@ -1188,6 +1188,11 @@ chokidar@^3.5.2:
   optionalDependencies:
     fsevents "~2.3.2"
 
+chunk-promise@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/chunk-promise/-/chunk-promise-1.2.1.tgz#330c87320ec8eb74d6c6aeb398fa55faea4d9ce0"
+  integrity sha512-gzs4MqYABYV185+85DSmzO7Fy3na0juJffqDE8/YXIyc4s5zIHfNNPPkEuUCvDYv3fSP1TJt+Lx1D/3fs8DH2w==
+
 cipher-base@^1.0.0, cipher-base@^1.0.1, cipher-base@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/cipher-base/-/cipher-base-1.0.4.tgz#8760e4ecc272f4c363532f926d874aae2c1397de"
