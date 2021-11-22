@@ -6,6 +6,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import logo from "../public/pitchforkify.png";
 import { PersonIcon } from "./icons/PersonIcon";
+import { useEffect, useState } from "react";
 
 const AccountButton = ({
   className,
@@ -22,10 +23,39 @@ const AccountButton = ({
 );
 
 export const Header = () => {
+  const [top, topSet] = useState<"hidden" | "shown">("hidden");
   const [session] = useSession();
 
+  useEffect(() => {
+    let lastScroll = 0;
+
+    function onScroll() {
+      const currentScroll = window.scrollY;
+
+      if (currentScroll > lastScroll || currentScroll === 0) {
+        topSet("hidden");
+      } else {
+        topSet("shown");
+      }
+
+      lastScroll = currentScroll;
+    }
+
+    document.addEventListener("scroll", onScroll);
+
+    return () => {
+      document.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
   return (
-    <div className="h-16 w-full border-b border-gray-200 flex items-center">
+    <nav
+      className={makeClass(
+        "h-16 w-full border-b border-gray-200 flex items-center sticky z-50 bg-white",
+        top === "shown" ? "top-0 shadow-md" : "-top-16"
+      )}
+      style={{ transition: "top 0.5s" }}
+    >
       <div className="max-w-6xl px-3 md:px-8 w-full mx-auto flex justify-between items-center">
         <Link passHref href="/">
           <a className="flex items-center">
@@ -79,6 +109,6 @@ export const Header = () => {
           )}
         </div>
       </div>
-    </div>
+    </nav>
   );
 };
