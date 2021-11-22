@@ -23,7 +23,9 @@ export default function App({
           <ReviewsContext.Provider value={{ reviews: pageProps.reviews }}>
             <PlayerProvider>
               <Header />
-              <Component {...pageProps} />
+              <main>
+                <Component {...pageProps} />
+              </main>
               <PlayerControls />
             </PlayerProvider>
           </ReviewsContext.Provider>

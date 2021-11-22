@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import Image from "next/image";
+import makeClass from "clsx";
 
 import { formatTime } from "../utils/formatTime";
 
@@ -11,6 +12,50 @@ import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayerContext } from "../utils/PlayerContext";
 import { PlayButton } from "./PlayButton";
 import { ReviewsContext } from "../utils/ReviewsContext";
+import { PauseIcon } from "./icons/PauseIcon";
+import { PlayIcon } from "./icons/PlayIcon";
+
+interface ScrubberBarProps extends React.ComponentProps<"div"> {
+  currentTime: number;
+  duration: number;
+}
+
+const ScrubberBar = ({
+  duration,
+  currentTime,
+  className,
+  onClick,
+  ...props
+}: ScrubberBarProps) => {
+  const { player } = useContext(PlayerContext);
+
+  return (
+    <div
+      className={makeClass("overflow-hidden rounded", className)}
+      onClick={(e) => {
+        const percent =
+          e.nativeEvent.offsetX /
+          Number(getComputedStyle(e.target as Element).width.replace("px", ""));
+
+        player.seek(percent * duration);
+        onClick?.(e);
+      }}
+      {...props}
+    >
+      <div className="h-1 w-full absolute left-0 top-1/2 -translate-y-1/2 bg-gray-400" />
+      <div
+        style={{
+          left: `${(currentTime / duration - 1) * 100}%`,
+        }}
+        className="h-1 w-full bg-gray-700 absolute top-1/2 -translate-y-1/2"
+      />
+      <div
+        style={{ height: 20 }}
+        className="w-full absolute top-0 left-0 cursor-pointer"
+      />
+    </div>
+  );
+};
 
 export const PlayerControls = () => {
   const spotifyApi = useSpotifyApi();
@@ -170,9 +215,19 @@ export const PlayerControls = () => {
   }
 
   return (
-    <div className="bg-white h-24 fixed left-0 right-0 bottom-0 grid gap-6 grid-cols-3 shadow-lg border-t items-center z-50">
-      <div className="ml-2 flex items-center w-full">
-        <div className="h-20 w-20 border mr-4 border-gray-300 hidden md:block">
+    <div
+      className={makeClass(
+        "bg-white h-16 m-1 rounded-md border border-gray-300 shadow-xl fixed left-0 right-0 bottom-0 grid gap-6 border-t items-center z-50 overflow-hidden",
+        "md:grid-cols-3 md:h-24 md:m-0 md:rounded-none"
+      )}
+    >
+      <div className="mx-2 flex items-center border-box mb-1 md:mb-0">
+        <div
+          className={makeClass(
+            "h-12 w-12 border mr-3 md:mr-4 border-gray-300 rounded overflow-hidden",
+            "md:h-20 md:w-20 md:rounded-none"
+          )}
+        >
           <Image
             src={playerState.cover}
             alt=""
@@ -181,23 +236,35 @@ export const PlayerControls = () => {
             layout="fixed"
           />
         </div>
-        <div className="min-w-0 mr-6">
-          <div className="font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
-            {playerState.track}
+        <div className="flex-1 min-w-0 flex">
+          <div className="mr-6">
+            <div className="font-medium md:font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
+              {playerState.track}
+            </div>
+            <div className="text-sm overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
+              {playerState.artist}
+            </div>
           </div>
-          <div className="text-sm overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
-            {playerState.artist}
-          </div>
+          <button
+            onClick={toggleFavorite}
+            style={{ fill: playerState.isSaved ? "red" : undefined }}
+          >
+            {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
+          </button>
         </div>
-        <button
-          onClick={toggleFavorite}
-          style={{ fill: playerState.isSaved ? "red" : undefined }}
-        >
-          {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
+
+        <button onClick={() => player.togglePlay()} className="md:hidden w-8 self-stretch flex items-center justify-center">
+          {playerState.playing ? <PauseIcon /> : <PlayIcon />}
         </button>
       </div>
 
-      <div className="flex flex-col items-center">
+      <ScrubberBar
+        currentTime={currentTime}
+        duration={playerState.duration}
+        className="absolute md:hidden inset-x-2 bottom-0 h-1"
+      />
+
+      <div className="hidden md:flex flex-col items-center">
         <div className="mb-2">
           <button
             onClick={playPreviousTrack}
@@ -224,35 +291,11 @@ export const PlayerControls = () => {
           >
             {formatTime(currentTime / 1000)}
           </div>
-          <div
-            className="relative w-full overflow-hidden"
-            style={{ height: 20 }}
-            onClick={(e) => {
-              const percent =
-                e.nativeEvent.offsetX /
-                Number(
-                  getComputedStyle(e.target as Element).width.replace("px", "")
-                );
-
-              player.seek(percent * playerState.duration);
-            }}
-          >
-            <div
-              style={{ height: 4 }}
-              className="w-full absolute left-0 top-1/2 -translate-y-1/2 bg-gray-400"
-            />
-            <div
-              style={{
-                height: 4,
-                left: `${(currentTime / playerState.duration - 1) * 100}%`,
-              }}
-              className="w-full bg-gray-700 absolute top-1/2 -translate-y-1/2"
-            />
-            <div
-              style={{ height: 20 }}
-              className="w-full absolute top-0 left-0 cursor-pointer"
-            />
-          </div>
+          <ScrubberBar
+            currentTime={currentTime}
+            duration={playerState.duration}
+            className="relative h-5 w-full"
+          />
           <div
             style={{ fontVariantNumeric: "tabular-nums" }}
             className="text-sm"

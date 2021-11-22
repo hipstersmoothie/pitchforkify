@@ -5,7 +5,7 @@
 }
 
 .review-detail__abstract {
-  @apply text-lg md:text-[26px] mt-20 mb-10 text-gray-200 md:leading-10 max-w-[55ch];
+  @apply text-lg md:text-[26px] mt-12 md:mt-20 mb-10 text-gray-200 md:leading-10 max-w-[55ch];
 }
 
 .product-name,

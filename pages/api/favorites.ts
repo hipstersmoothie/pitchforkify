@@ -2,32 +2,32 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { PAGE_SIZE } from "../../utils/constants";
 import prisma from "../../utils/primsa";
 
-type GetReviewsOptions =
-  | {
-      cursor: number;
-    }
-  | {
-      page: number;
-    };
+interface GetFavoritesOptions {
+  cursor?: number;
+  favorites: string[];
+}
 
-export function getReviews(options: GetReviewsOptions) {
+export async function getFavorites(options: GetFavoritesOptions) {
   const findOptions: Parameters<typeof prisma.review.findMany>[0] = {
     take: PAGE_SIZE,
   };
 
-  if ("cursor" in options && options.cursor) {
+  if (options.cursor) {
     findOptions.skip = 1;
     findOptions.cursor = {
       id: options.cursor,
     };
-  } else if ("page" in options && options.page) {
-    findOptions.skip = PAGE_SIZE * (options.page - 1);
   }
 
-  return prisma.review
+  return await prisma.review
     .findMany({
       ...findOptions,
       orderBy: [{ id: "desc" }],
+      where: {
+        spotifyAlbum: {
+          in: options.favorites,
+        },
+      },
       include: {
         labels: true,
         artists: true,
@@ -44,15 +44,14 @@ export function getReviews(options: GetReviewsOptions) {
     );
 }
 
-export type Review = Awaited<ReturnType<typeof getReviews>>[number];
-
-export default async function reviews(
+export default async function favorites(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const reviews = await getReviews({
-    page: req.query.page ? Number(req.query.page) : undefined,
+  const reviews = await getFavorites({
+    favorites: JSON.parse(req.body),
     cursor: req.query.cursor ? Number(req.query.cursor) : undefined,
   });
+
   res.status(200).json(reviews);
 }
