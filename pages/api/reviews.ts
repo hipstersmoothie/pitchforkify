@@ -10,7 +10,9 @@ type GetReviewsOptions =
     };
 
 export function getReviews(options: GetReviewsOptions) {
-  const findOptions: Parameters<typeof prisma.review.findMany>[0] = {};
+  const findOptions: Parameters<typeof prisma.review.findMany>[0] = {
+    take: 12,
+  };
 
   if ("cursor" in options && options.cursor) {
     findOptions.skip = 1;
@@ -24,8 +26,7 @@ export function getReviews(options: GetReviewsOptions) {
   return prisma.review
     .findMany({
       ...findOptions,
-      orderBy: [{ createdAt: "desc" }],
-      take: 12,
+      orderBy: [{ id: "desc" }],
       include: {
         labels: true,
         artists: true,

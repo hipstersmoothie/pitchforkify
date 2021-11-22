@@ -1,5 +1,6 @@
 import { useSession, signIn, signOut } from "next-auth/client";
 import Image from "next/image";
+import Link from "next/link";
 import makeClass from "clsx";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
@@ -49,11 +50,18 @@ export const Header = () => {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content
-                className="border border-gray-400 rounded "
+                className="border border-gray-400 rounded bg-white"
                 sideOffset={10}
               >
-                <DropdownMenu.Item className="px-4 py-2">
-                  <button onClick={() => signOut()}>Sign out</button>
+                <DropdownMenu.Item>
+                  <Link passHref href="/profile">
+                    <a className="px-4 py-2 block">Profile</a>
+                  </Link>
+                </DropdownMenu.Item>
+                <DropdownMenu.Item>
+                  <button className="px-4 py-2" onClick={() => signOut()}>
+                    Sign out
+                  </button>
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
