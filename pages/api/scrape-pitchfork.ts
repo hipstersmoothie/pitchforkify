@@ -2,8 +2,10 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import cheerio, { CheerioAPI, Element } from "cheerio";
 import fetch from "isomorphic-fetch";
 import SpotifyWebApi from "spotify-web-api-node";
+
 import prisma from "../../utils/primsa";
 import { sleep } from "../../utils/sleep";
+import { Prisma } from "@prisma/client";
 
 const rootUrl = "https://pitchfork.com";
 
@@ -42,9 +44,19 @@ async function searchAlbums(artist: string, album: string) {
 
     return items;
   } catch (error) {
-    if (error.code === "ECONNRESET") {
-      console.log("Errors with spotify. Waiting...")
-      await sleep(30 * 1000);
+    if (
+      error.code === "ECONNRESET" ||
+      error.statusCode === 500 ||
+      error.statusCode === 429
+    ) {
+      console.log("Errors with spotify. Waiting...");
+
+      if (error.statusCode === 429) {
+        await sleep(Number(error.headers["retry-after"]) * 1000);
+      } else {
+        await sleep(30 * 1000);
+      }
+
       return searchAlbums(artist, album);
     }
 
@@ -59,7 +71,8 @@ interface ParsedReview {
   cover: string;
   spotifyAlbum: string;
   score: number;
-  publishDate: string;
+  author: string;
+  publishDate: Date;
   isBestNew: boolean;
   labels: { name: string }[];
   artists: { name: string }[];
@@ -71,10 +84,10 @@ async function parseReview(
   $reviewPage: CheerioAPI,
   reviewEl: Element
 ): Promise<ParsedReview> {
-  const $reviewPagee = await getPage(
+  const $reviewPageEl = await getPage(
     `${rootUrl}${$reviewPage(".review__link", reviewEl).attr("href")}`
   );
-  const reviewHtml = $reviewPagee(".review-detail__article-content")
+  const reviewHtml = $reviewPageEl(".review-detail__article-content")
     .first()
     .html();
 
@@ -94,14 +107,19 @@ async function parseReview(
     albumTitle: $reviewPage(".review__title-album", reviewEl).text(),
     cover: $reviewPage(".review__artwork img", reviewEl).attr("src"),
     spotifyAlbum: albums[0]?.uri || null,
-    score: Number($reviewPagee(".score").first().text()),
-    publishDate: $reviewPage(".pub-date", reviewEl).attr("datetime"),
+    score: Number($reviewPageEl(".score").first().text()),
+    author: $reviewPage(".display-name--linked", reviewEl)
+      .text()
+      .replace("by: ", ""),
+    publishDate: new Date($reviewPage(".pub-date", reviewEl).attr("datetime")),
     isBestNew: $reviewPage(".review__artwork--with-notch", reviewEl).length > 0,
-    labels: $reviewPagee(".labels-list__item")
+    labels: $reviewPageEl(".labels-list__item")
+      .first()
       .toArray()
       .map((label) => ({ name: $reviewPage(label).text() })),
     artists,
     genres: $reviewPage(".genre-list__item", reviewEl)
+      .first()
       .toArray()
       .map((genre) => ({ name: $reviewPage(genre).text() })),
     reviewHtml,
@@ -118,58 +136,66 @@ export async function scrapeReviews(page: number) {
     reviewsHtml.toArray().map((review) => parseReview($, review))
   );
 
-  const reviewCreation = reviews.map((r) => ({
+  // : Prisma.ReviewCreateArgs["data"]
+  const reviewCreations = reviews.reverse().map((r) => ({
     ...r,
-    labels: { create: r.labels.map((l) => ({ label: { connectOrCreate: l } })) },
-    artists: { create: r.artists.map((a) => ({ artist: { connectOrCreate: a } })) },
-    genres: { create: r.genres.map((g) => ({ genre: { connectOrCreate: g } })) },
+    labels: {
+      connectOrCreate: r.labels.map((l) => ({ where: l, create: l })),
+    },
+    artists: {
+      connectOrCreate: r.artists.map((a) => ({ where: a, create: a })),
+    },
+    genres: {
+      connectOrCreate: r.genres.map((g) => ({ where: g, create: g })),
+    },
   }));
 
-  await Promise.all(
-    reviewCreation.map(async (data) => {
-      const review = await prisma.review.findFirst({
-        where: {
+  for (const data of reviewCreations) {
+    const review = await prisma.review.findUnique({
+      where: {
+        albumTitle_publishDate: {
           albumTitle: data.albumTitle,
           publishDate: data.publishDate,
         },
-        select: {
-          id: true,
-          spotifyAlbum: true
-        }
-      });
+      },
+      select: {
+        id: true,
+        spotifyAlbum: true,
+      },
+    });
 
-      if (!review) {
-        console.log(
-          `Added: "${data.albumTitle}" by ${data.artists.create
-            .map((a) => a.artist.create.name)
-            .join(", ")}`,
-          { hasSpotify: Boolean(data.spotifyAlbum) }
-        );
-        try {
-          await prisma.review.create({
-            data,
-          });
-        } catch (error) {
-          console.log(data);
-          throw error;
-        }
-      } else if (!review.spotifyAlbum && data.spotifyAlbum) {
-        console.log(
-          `Updated: "${data.albumTitle}" by ${data.artists.create
-            .map((a) => a.artist.create.name)
-            .join(", ")}`
-        );
-        await prisma.review.update({
-          where: {
-            id: review.id,
-          },
-          data: {
-            spotifyAlbum: data.spotifyAlbum,
-          },
+    if (!review) {
+      console.log(
+        `Added: "${data.albumTitle}" by ${data.artists.connectOrCreate
+          .map((a) => a.create.name)
+          .join(", ")}`,
+        { hasSpotify: Boolean(data.spotifyAlbum) }
+      );
+      try {
+        await prisma.review.create({
+          data,
         });
+      } catch (error) {
+        delete data.reviewHtml;
+        console.log(JSON.stringify(data, null, 2));
+        throw error;
       }
-    })
-  );
+    } else if (!review.spotifyAlbum && data.spotifyAlbum) {
+      console.log(
+        `Updated: "${data.albumTitle}" by ${data.artists.connectOrCreate
+          .map((a) => a.create.name)
+          .join(", ")}`
+      );
+      await prisma.review.update({
+        where: {
+          id: review.id,
+        },
+        data: {
+          spotifyAlbum: data.spotifyAlbum,
+        },
+      });
+    }
+  }
 }
 
 export default async function scrapePitchfork(

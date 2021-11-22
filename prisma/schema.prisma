@@ -16,67 +16,40 @@ datasource db {
 model Review {
   id Int @id @default(autoincrement())
 
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  albumTitle   String           @db.VarChar(300)
-  reviewHtml   String           @db.MediumText
-  cover        String           @db.VarChar(400)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  albumTitle   String   @db.VarChar(300)
+  reviewHtml   String   @db.MediumText
+  cover        String   @db.VarChar(400)
   spotifyAlbum String?
+  author       String
   score        Float
-  publishDate  String
+  publishDate  DateTime
   isBestNew    Boolean
-  labels       LabelOnReview[]
-  artists      ArtistOnReview[]
-  genres       GenreOnReview[]
+  labels       Label[]  @relation(references: [id])
+  artists      Artist[] @relation(references: [id])
+  genres       Genre[]  @relation(references: [id])
+
+  @@unique([albumTitle, publishDate])
 }
 
 model Label {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews LabelOnReview[]
-}
-
-model LabelOnReview {
-  review   Review @relation(fields: [reviewId], references: [id])
-  reviewId Int
-
-  label   Label @relation(fields: [labelId], references: [id])
-  labelId Int
-
-  @@id([reviewId, labelId])
+  reviews Review[] @relation(references: [id])
 }
 
 model Artist {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews ArtistOnReview[]
-}
-
-model ArtistOnReview {
-  review   Review @relation(fields: [reviewId], references: [id])
-  reviewId Int
-
-  artist   Artist @relation(fields: [artistId], references: [id])
-  artistId Int
-
-  @@id([reviewId, artistId])
+  reviews Review[] @relation(references: [id])
 }
 
 model Genre {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews GenreOnReview[]
-}
-
-model GenreOnReview {
-  review   Review @relation(fields: [reviewId], references: [id])
-  reviewId Int
-
-  genre   Genre @relation(fields: [genreId], references: [id])
-  genreId Int
-
-  @@id([reviewId, genreId])
+  reviews Review[] @relation(references: [id])
 }

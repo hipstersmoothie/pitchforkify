@@ -31,6 +31,7 @@ import { HeartIcon } from "../components/icons/HeartIcon";
 import { getReviews, Review } from "./api/reviews";
 import useIntersectionObserver from "../utils/useIntersectionObserver";
 import { LoadingLogoIcon } from "../components/icons/LoadingLogo";
+import { useRouter } from "next/dist/client/router";
 
 const DEVICE_NAME = "pitchforkify";
 
@@ -115,9 +116,9 @@ const ArtistList = ({ review, ...props }: ArtistListProps) => {
       {review.artists.map((artist) => (
         <li
           className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
-          key={`${review.albumTitle}-${artist}`}
+          key={`${artist.id}-${review.id}`}
         >
-          {artist.artist.name}
+          {artist.name}
         </li>
       ))}
     </ul>
@@ -134,9 +135,9 @@ const LabelList = ({ review, className, ...props }: LabelListProps) => {
       {review.labels.map((label) => (
         <li
           className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
-          key={`${review.albumTitle}-${label}`}
+          key={`${label.id}-${review.id}`}
         >
-          {label.label.name}
+          {label.name}
         </li>
       ))}
     </ul>
@@ -148,10 +149,10 @@ interface ScoreProps extends React.ComponentProps<"div"> {
   isBig?: boolean;
 }
 
-const Score = ({ review, className, ...props }: ScoreProps) => {
+const Score = ({ review, className, isBig, ...props }: ScoreProps) => {
   return (
     <div className="flex items-center flex-col gap-6">
-      {review.isBestNew && <BestNewBadge />}
+      {review.isBestNew && isBig && <BestNewBadge />}
       <div
         className={makeClass(
           className,
@@ -266,9 +267,9 @@ const ReviewComponent = (review: Review) => {
             {review.genres.map((genre) => (
               <li
                 className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
-                key={`${review.albumTitle}-${genre}`}
+                key={`${genre.id}-${review.id}`}
               >
-                {genre.genre.name}
+                {genre.name}
               </li>
             ))}
           </ul>
@@ -582,28 +583,48 @@ interface HomeProps {
 
 export default function Home({ reviews, page }: HomeProps) {
   const [session] = useSession();
+  const router = useRouter();
   const bottomRef = useRef<HTMLDivElement>();
-  const {
-    data,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-  } = useInfiniteQuery(
-    "reviews",
-    async ({ pageParam }: { pageParam?: number }) => {
-      console.log("DEBUG2", { pageParam });
-      const res = await fetch("/api/reviews?page=" + pageParam);
-      const data = await res.json();
-      return { pageParam, reviews: data as Review[] };
-    },
-    {
-      initialData: {
-        pages: [{ pageParam: page, reviews: reviews }],
-        pageParams: [page],
+  const { data, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useInfiniteQuery(
+      "reviews",
+      async ({
+        pageParam,
+      }: {
+        pageParam?: { page: number; cursor?: number };
+      }) => {
+        const res = await fetch(
+          `/api/reviews?${
+            pageParam.cursor
+              ? `cursor=${pageParam.cursor}`
+              : `page=${pageParam.page}`
+          }`
+        );
+        const data = await res.json();
+        router.query.page = String(pageParam.page);
+        router.push(router, undefined, {
+          scroll: false,
+        });
+        return { pageParam, reviews: data as Review[] };
       },
-      getNextPageParam: ({ pageParam }) => pageParam + 1,
-    }
-  );
+      {
+        initialData: {
+          pages: [
+            {
+              pageParam: { page },
+              reviews: reviews,
+            },
+          ],
+          pageParams: [{ page }],
+        },
+        getNextPageParam: ({ pageParam, reviews }) => {
+          return {
+            page: pageParam.page + 1,
+            cursor: reviews[reviews.length - 1].id,
+          };
+        },
+      }
+    );
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
@@ -674,7 +695,7 @@ export default function Home({ reviews, page }: HomeProps) {
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const page = context.query.page ? Number(context.query.page) : 1;
-  const reviews = await getReviews(page);
+  const reviews = await getReviews({ page });
 
   return {
     props: { reviews, page },
