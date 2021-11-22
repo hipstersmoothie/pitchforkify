@@ -97,7 +97,7 @@ const ReviewComponent = (review: Review) => {
         asChild
         style={{ WebkitAppearance: "none" }}
       >
-        <li className="mb-10 flex flex-col items-center text-center cursor-pointer">
+        <li className="mb-6 md:mb-10 flex flex-col items-center text-center cursor-pointer">
           <AlbumCover
             review={review}
             className={makeClass("mb-4", review.isBestNew && "bestNew")}
@@ -243,7 +243,7 @@ export const ReviewGrid = ({
   });
 
   return (
-    <div className="pt-10 pb-32">
+    <div className="pt-8 md:pt-10 pb-32">
       <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8">
         {data.pages.map((page) =>
           page.reviews.map((review) => (
