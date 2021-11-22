@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { getSession, useSession } from "next-auth/client";
+import { getSession, useSession } from "next-auth/react";
 import SpotifyWebApi from "spotify-web-api-node";
 import Image from "next/image";
 
@@ -23,7 +23,7 @@ export default function Profile({
   favoriteAlbums,
   totalAlbumsWithReviews,
 }: ProfileProps) {
-  const [session] = useSession();
+  const { data: session } = useSession();
 
   if (!session) {
     return null;

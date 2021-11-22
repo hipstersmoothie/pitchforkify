@@ -1,4 +1,4 @@
-import { Provider as SessionProvider } from "next-auth/client";
+import { SessionProvider } from "next-auth/react";
 import { IdProvider } from "@radix-ui/react-id";
 import { QueryClient, QueryClientProvider } from "react-query";
 

@@ -1,4 +1,4 @@
-import { useSession, signIn } from "next-auth/client";
+import { useSession, signIn } from "next-auth/react";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import { useEffect } from "react";
@@ -10,11 +10,11 @@ export default function Home({
   reviews,
   page,
 }: Omit<ReviewGridProps, "endpoint">) {
-  const [session] = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
-      signIn();
+      signIn("spotify");
     }
   }, [session]);
 

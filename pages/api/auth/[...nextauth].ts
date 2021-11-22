@@ -1,6 +1,6 @@
 import NextAuth, { User } from "next-auth";
 import { JWT } from "next-auth/jwt";
-import Providers from "next-auth/providers";
+import SpotifyProvider from "next-auth/providers/spotify";
 import SpotifyWebApi from "spotify-web-api-node";
 
 /**
@@ -40,29 +40,34 @@ async function refreshAccessToken(token: JWT) {
 
 export default NextAuth({
   providers: [
-    Providers.Spotify({
+    SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID,
       clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-      scope:
-        "user-read-email user-read-private streaming user-read-currently-playing user-read-playback-state user-modify-playback-state user-library-modify user-library-read",
+      authorization: {
+        url: "https://accounts.spotify.com/authorize",
+        params: {
+          scope:
+            "user-read-email user-read-private streaming user-read-currently-playing user-read-playback-state user-modify-playback-state user-library-modify user-library-read",
+        },
+      },
 
       profile: async (profile, tokens) => {
         return {
           id: profile.id,
           name: profile.display_name,
           email: profile.email,
-          accessToken: tokens.accessToken,
+          accessToken: tokens.access_token,
           image: profile.images?.[0]?.url,
         } as User & { id: string };
       },
     }),
   ],
   callbacks: {
-    async session(session, token) {
+    async session({ session, token }) {
       session.accessToken = token.accessToken;
       return session;
     },
-    async jwt(token, user, account) {
+    async jwt({ token, user, account }) {
       // Initial sign in
       if (user && account) {
         token.accessToken = user.accessToken;

@@ -1,11 +1,11 @@
-import { signIn, useSession } from "next-auth/client";
+import { signIn, useSession } from "next-auth/react";
 import { useCallback, useContext, useMemo } from "react";
 import SpotifyWebApi from "spotify-web-api-node";
 import { Review } from "../pages/api/reviews";
 import { DEVICE_NAME, PlayerContext } from "./PlayerContext";
 
 export const useSpotifyApi = () => {
-  const [session] = useSession();
+  const { data: session } = useSession();
   const spotifyApi = useMemo(
     () =>
       new SpotifyWebApi({
@@ -19,14 +19,14 @@ export const useSpotifyApi = () => {
 };
 
 export const usePlayAlbum = () => {
-  const [session] = useSession();
+  const { data: session } = useSession();
   const { playerId, player } = useContext(PlayerContext);
   const spotifyApi = useSpotifyApi();
 
   return useCallback(
     async (review: Review) => {
       if (!session) {
-        return signIn();
+        return signIn("spotify");
       }
 
       const {

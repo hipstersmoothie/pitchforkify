@@ -1,4 +1,4 @@
-import { useSession } from "next-auth/client";
+import { useSession } from "next-auth/react";
 import { createContext, useEffect, useRef, useState } from "react";
 
 export const DEVICE_NAME = "pitchforkify";
@@ -7,7 +7,7 @@ export const PlayerContext =
   createContext<{ player: Spotify.Player; playerId: string }>(undefined);
 
 export const PlayerProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session] = useSession();
+  const { data: session } = useSession();
   const [playerId, playerIdSet] = useState<string>();
   const player = useRef<Spotify.Player>();
 

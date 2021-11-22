@@ -1,4 +1,4 @@
-import { useSession, signIn, signOut } from "next-auth/client";
+import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import makeClass from "clsx";
@@ -24,7 +24,7 @@ const AccountButton = ({
 
 export const Header = () => {
   const [top, topSet] = useState<"hidden" | "shown">("hidden");
-  const [session] = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     let lastScroll = 0;
@@ -105,7 +105,9 @@ export const Header = () => {
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           ) : (
-            <AccountButton onClick={() => signIn()}>Sign in</AccountButton>
+            <AccountButton onClick={() => signIn("spotify")}>
+              Sign in
+            </AccountButton>
           )}
         </div>
       </div>
