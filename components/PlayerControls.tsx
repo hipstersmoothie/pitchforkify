@@ -302,11 +302,11 @@ export const PlayerControls = () => {
           <VolumeIcon volume={volume} />
         </button>
         <ScrubberBar
-          max={1}
+          max={100}
           value={volume}
           onChange={(newVolume) => {
             setVolume(newVolume);
-            player.setVolume(newVolume);
+            player.setVolume(newVolume / 100);
           }}
           className="relative w-[100px] h-4"
         />

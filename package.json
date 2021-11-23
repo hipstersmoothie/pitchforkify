@@ -12,6 +12,7 @@
     "@radix-ui/react-dialog": "^0.1.1",
     "@radix-ui/react-dropdown-menu": "^0.1.1",
     "@radix-ui/react-id": "^0.1.1",
+    "@radix-ui/react-slider": "^0.1.1",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.10",
     "chunk-promise": "^1.2.1",
