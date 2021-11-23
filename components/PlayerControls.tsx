@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import makeClass from "clsx";
 
@@ -14,55 +14,17 @@ import { PlayButton } from "./PlayButton";
 import { ReviewsContext } from "../utils/ReviewsContext";
 import { PauseIcon } from "./icons/PauseIcon";
 import { PlayIcon } from "./icons/PlayIcon";
-
-interface ScrubberBarProps extends React.ComponentProps<"div"> {
-  currentTime: number;
-  duration: number;
-}
-
-const ScrubberBar = ({
-  duration,
-  currentTime,
-  className,
-  onClick,
-  ...props
-}: ScrubberBarProps) => {
-  const { player } = useContext(PlayerContext);
-
-  return (
-    <div
-      className={makeClass("overflow-hidden rounded", className)}
-      onClick={(e) => {
-        const percent =
-          e.nativeEvent.offsetX /
-          Number(getComputedStyle(e.target as Element).width.replace("px", ""));
-
-        player.seek(percent * duration);
-        onClick?.(e);
-      }}
-      {...props}
-    >
-      <div className="h-1 w-full absolute left-0 top-1/2 -translate-y-1/2 bg-gray-400" />
-      <div
-        style={{
-          left: `${(currentTime / duration - 1) * 100}%`,
-        }}
-        className="h-1 w-full bg-gray-700 absolute top-1/2 -translate-y-1/2"
-      />
-      <div
-        style={{ height: 20 }}
-        className="w-full absolute top-0 left-0 cursor-pointer"
-      />
-    </div>
-  );
-};
+import { ScrubberBar } from "./ScrubberBarProps";
+import { VolumeIcon } from "./icons/VolumeIcon";
 
 export const PlayerControls = () => {
+  const volumeBeforeMute = useRef<number>(1);
   const spotifyApi = useSpotifyApi();
   const playAlbum = usePlayAlbum();
   const { reviews } = useContext(ReviewsContext);
   const { player } = useContext(PlayerContext);
   const [currentTime, setCurrentTime] = useState(0);
+  const [volume, setVolume] = useState(100);
   const [playerState, playerStateSet] = useState({
     playing: false,
     artist: "",
@@ -82,6 +44,7 @@ export const PlayerControls = () => {
     [reviews]
   );
 
+  // React to playback changes
   useEffect(() => {
     if (!player) {
       return;
@@ -121,6 +84,7 @@ export const PlayerControls = () => {
     };
   }, [player, spotifyApi]);
 
+  // Enable "Space" to toggle playback
   useEffect(() => {
     function pressSpace(e: KeyboardEvent) {
       if (e.key === " " && playerState.track) {
@@ -136,6 +100,7 @@ export const PlayerControls = () => {
     };
   }, [playerState.track, player]);
 
+  // Poll the player state every second
   useEffect(() => {
     const interval = setInterval(() => {
       if (!player) {
@@ -157,6 +122,8 @@ export const PlayerControls = () => {
           }
         }
       });
+
+      player.getVolume().then(setVolume);
     }, 1000);
 
     return () => {
@@ -164,7 +131,14 @@ export const PlayerControls = () => {
         clearInterval(interval);
       }
     };
-  }, [getAlbumFromOffset, playAlbum, player, playerState.duration, reviews]);
+  }, [
+    getAlbumFromOffset,
+    playAlbum,
+    player,
+    playerState.duration,
+    reviews,
+    setVolume,
+  ]);
 
   const playPreviousTrack = useCallback(() => {
     player.getCurrentState().then((s) => {
@@ -253,14 +227,18 @@ export const PlayerControls = () => {
           </button>
         </div>
 
-        <button onClick={() => player.togglePlay()} className="md:hidden w-8 self-stretch flex items-center justify-center">
+        <button
+          onClick={() => player.togglePlay()}
+          className="md:hidden w-8 self-stretch flex items-center justify-center"
+        >
           {playerState.playing ? <PauseIcon /> : <PlayIcon />}
         </button>
       </div>
 
       <ScrubberBar
-        currentTime={currentTime}
-        duration={playerState.duration}
+        value={currentTime}
+        max={playerState.duration}
+        onChange={(newTime) => player.seek(newTime)}
         className="absolute md:hidden inset-x-2 bottom-0 h-1"
       />
 
@@ -292,8 +270,9 @@ export const PlayerControls = () => {
             {formatTime(currentTime / 1000)}
           </div>
           <ScrubberBar
-            currentTime={currentTime}
-            duration={playerState.duration}
+            value={currentTime}
+            max={playerState.duration}
+            onChange={(newTime) => player.seek(newTime)}
             className="relative h-5 w-full"
           />
           <div
@@ -303,6 +282,34 @@ export const PlayerControls = () => {
             {formatTime(Number(playerState.duration) / 1000)}
           </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-end h-full w-full p-10">
+        <button
+          className="mr-2"
+          onClick={() => {
+            let newVolume = volumeBeforeMute.current;
+
+            if (volume !== 0) {
+              volumeBeforeMute.current = volume;
+              newVolume = 0;
+            }
+
+            setVolume(newVolume);
+            player.setVolume(newVolume);
+          }}
+        >
+          <VolumeIcon volume={volume} />
+        </button>
+        <ScrubberBar
+          max={1}
+          value={volume}
+          onChange={(newVolume) => {
+            setVolume(newVolume);
+            player.setVolume(newVolume);
+          }}
+          className="relative w-[100px] h-4"
+        />
       </div>
     </div>
   );
