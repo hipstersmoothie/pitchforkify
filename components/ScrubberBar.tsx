@@ -1,5 +1,6 @@
 import makeClass from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 interface ScrubberBarProps
   extends Omit<React.ComponentProps<"div">, "onChange"> {
@@ -18,19 +19,22 @@ export const ScrubberBar = ({
   ...props
 }: ScrubberBarProps) => {
   const isDragging = useRef(false);
+  const [internalValue, internalValueSet] = useState(value);
   const [showThumb, setShowThumb] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const debouncedOnChange = useDebouncedCallback(onChange, 200);
 
   const setValue = useCallback(
     (pageX: number) => {
       const { x, width } = wrapperRef.current.getBoundingClientRect();
       const clickXBounded = Math.min(x + width, Math.max(x, pageX));
-      const newValue = clickXBounded - x;
-      const percent = newValue / width;
+      const percent = (clickXBounded - x) / width;
+      const newValue = percent * max;
 
-      onChange(percent * max);
+      internalValueSet(newValue);
+      debouncedOnChange(newValue);
     },
-    [max, onChange]
+    [max, debouncedOnChange]
   );
 
   useEffect(() => {
@@ -76,14 +80,14 @@ export const ScrubberBar = ({
         <div className="h-1 w-full absolute left-0 top-1/2 -translate-y-1/2 bg-gray-400" />
         <div
           style={{
-            left: `${(value / max - 1) * 100}%`,
+            left: `${(internalValue / max - 1) * 100}%`,
           }}
           className="h-1 w-full bg-gray-700 absolute top-1/2 -translate-y-1/2"
         />
       </div>
       <div
         style={{
-          left: `${100 + (value / max - 1) * 100}%`,
+          left: `${100 + (internalValue / max - 1) * 100}%`,
         }}
         className={makeClass(
           "cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow-lg absolute top-1/2 -translate-y-1/2 -translate-x-1/2",

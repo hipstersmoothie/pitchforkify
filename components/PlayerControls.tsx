@@ -14,7 +14,7 @@ import { PlayButton } from "./PlayButton";
 import { ReviewsContext } from "../utils/ReviewsContext";
 import { PauseIcon } from "./icons/PauseIcon";
 import { PlayIcon } from "./icons/PlayIcon";
-import { ScrubberBar } from "./ScrubberBarProps";
+import { ScrubberBar } from "./ScrubberBar";
 import { VolumeIcon } from "./icons/VolumeIcon";
 
 export const PlayerControls = () => {
