@@ -22,7 +22,7 @@ import { Tooltip } from "./Tooltip";
 
 export const PlayerControls = () => {
   const volumeBeforeMute = useRef<number>(1);
-  const timeUpdateIntervale = useRef<number>(1);
+  const timeUpdateIntervale = useRef<ReturnType<typeof setInterval>>();
   const spotifyApi = useSpotifyApi();
   const playAlbum = usePlayAlbum();
   const { reviews } = useContext(ReviewsContext);
@@ -32,6 +32,7 @@ export const PlayerControls = () => {
   const [volume, setVolume] = useState(100);
   const [playerState, playerStateSet] = useState({
     playing: false,
+    album: "",
     artist: "",
     track: "",
     duration: 0,
@@ -68,6 +69,7 @@ export const PlayerControls = () => {
       setCurrentTime(newState.position);
       playerStateSet({
         playing: !newState.paused,
+        album: newState.track_window.current_track.album.uri,
         artist: newState.track_window.current_track.artists
           .map((a) => a.name)
           .join(", "),
@@ -314,7 +316,17 @@ export const PlayerControls = () => {
 
       <div className="flex items-center justify-end h-full w-full p-10">
         <Tooltip message="Open in Spotify">
-          <button className="mr-4">
+          <button
+            className="mr-4"
+            onClick={() =>
+              window.open(
+                `https://open.spotify.com/album/${playerState.album.replace(
+                  "spotify:album:",
+                  ""
+                )}?si=kKI9SkC6TMyQ9Ks9GRvn0w`
+              )
+            }
+          >
             <HomeIcon />
           </button>
         </Tooltip>
