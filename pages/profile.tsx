@@ -1,26 +1,22 @@
 import Head from "next/head";
 import { getSession, useSession } from "next-auth/react";
-import SpotifyWebApi from "spotify-web-api-node";
 import Image from "next/image";
 
-import { getFavorites } from "./api/favorites";
+import { getAllFavoritesUrisForSession } from "./api/favorites";
 import { ReviewGrid, ReviewGridProps } from "../components/ReviewGrid";
 import prisma from "../utils/primsa";
 import { Score } from "../components/Score";
 import { PersonIcon } from "../components/icons/PersonIcon";
 
 interface ProfileProps
-  extends Omit<ReviewGridProps, "endpoint" | "extraParams"> {
-  favoriteAlbums: string[];
+  extends Omit<ReviewGridProps, "endpoint" | "extraParams" | "reviews"> {
   score: number;
   totalAlbumsWithReviews: number;
 }
 
 export default function Profile({
-  reviews,
   page,
   score,
-  favoriteAlbums,
   totalAlbumsWithReviews,
 }: ProfileProps) {
   const { data: session } = useSession();
@@ -36,7 +32,7 @@ export default function Profile({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="flex items-end  max-w-6xl mx-auto px-8 md:px-16 pt-10 md:pt-20 pb-6 md:pb-12 gap-8">
+      <div className="flex items-end  max-w-6xl mx-auto px-4 md:px-16 pt-10 md:pt-20 pb-6 md:pb-12 gap-6 md:gap-8">
         <div className="w-1/4 mr-10 hidden md:block">
           {session.user.image ? (
             <Image
@@ -69,54 +65,29 @@ export default function Profile({
         </div>
       </div>
 
-      <ReviewGrid
-        reviews={reviews}
-        page={page}
-        endpoint="favorites"
-        body={JSON.stringify(favoriteAlbums)}
-      />
+      <ReviewGrid reviews={[]} page={page} endpoint="favorites" />
     </div>
   );
 }
 
 export async function getServerSideProps(ctx) {
+  const page = ctx.query.page ? Number(ctx.query.page) : 1;
   const session = await getSession(ctx);
-  const spotifyApi = new SpotifyWebApi({
-    clientId: process.env.SPOTIFY_CLIENT_ID,
-    ...session,
-  });
 
-  async function getAllSavedAlbums() {
-    let albums: SpotifyApi.SavedAlbumObject[] = [];
-    let offset = 0;
-
-    while (true) {
-      const {
-        body: { items },
-      } = await spotifyApi.getMySavedAlbums({
-        limit: 50,
-        offset,
-      });
-
-      offset += items.length - 1;
-      albums = [...albums, ...items];
-
-      if (items.length !== 50) {
-        break;
-      }
-    }
-
-    return albums;
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
   }
 
-  const favoriteAlbums = await getAllSavedAlbums();
-  const uris = favoriteAlbums.map((album) => album.album.uri);
-  const page = ctx.query.page ? Number(ctx.query.page) : 1;
-
+  const allFavorites = await getAllFavoritesUrisForSession(session);
   const counts = await prisma.review.aggregate({
     where: {
       spotifyAlbum: {
-        in: uris,
+        in: allFavorites,
       },
     },
     _avg: {
@@ -130,10 +101,8 @@ export async function getServerSideProps(ctx) {
   return {
     props: {
       page,
-      favoriteAlbums: uris,
       score: counts._avg.score || 0,
       totalAlbumsWithReviews: counts._count.id,
-      reviews: await getFavorites({ favorites: uris }),
     },
   };
 }

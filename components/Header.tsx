@@ -25,6 +25,7 @@ const AccountButton = ({
 export const Header = () => {
   const [top, topSet] = useState<"hidden" | "shown">("hidden");
   const { data: session } = useSession();
+  const [menuOpen, menuOpenSet] = useState(false);
 
   useEffect(() => {
     let lastScroll = 0;
@@ -68,7 +69,7 @@ export const Header = () => {
 
         <div className="flex gap-4">
           {session ? (
-            <DropdownMenu.Root>
+            <DropdownMenu.Root open={menuOpen} onOpenChange={menuOpenSet}>
               <DropdownMenu.Trigger>
                 <div className="flex items-center gap-4">
                   {session.user.image ? (
@@ -94,11 +95,22 @@ export const Header = () => {
               >
                 <DropdownMenu.Item>
                   <Link passHref href="/profile">
-                    <a className="px-4 py-2 block">Profile</a>
+                    <a
+                      className="px-4 py-2 block"
+                      onClick={() => menuOpenSet(false)}
+                    >
+                      Profile
+                    </a>
                   </Link>
                 </DropdownMenu.Item>
                 <DropdownMenu.Item>
-                  <button className="px-4 py-2" onClick={() => signOut()}>
+                  <button
+                    className="px-4 py-2"
+                    onClick={() => {
+                      signOut();
+                      menuOpenSet(false);
+                    }}
+                  >
                     Sign out
                   </button>
                 </DropdownMenu.Item>

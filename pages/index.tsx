@@ -1,20 +1,19 @@
 import { useSession, signIn } from "next-auth/react";
-import { GetServerSideProps } from "next";
+import { GetStaticProps } from "next";
 import Head from "next/head";
 import { useEffect } from "react";
 
-import { getReviews, Review } from "./api/reviews";
+import { getReviews } from "./api/reviews";
 import { ReviewGrid, ReviewGridProps } from "../components/ReviewGrid";
 
-export default function Home({
-  reviews,
-  page,
-}: Omit<ReviewGridProps, "endpoint">) {
+export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
   const { data: session } = useSession();
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
       signIn("spotify");
+    } else if (session?.accessToken) {
+      fetch(`/api/pull-favorites`);
     }
   }, [session]);
 
@@ -29,29 +28,16 @@ export default function Home({
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <ReviewGrid reviews={reviews} page={page} endpoint="reviews" />
-
-      {/* <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer> */}
+      <ReviewGrid reviews={reviews} page={1} endpoint="reviews" />
     </div>
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const page = context.query.page ? Number(context.query.page) : 1;
-  const reviews = await getReviews({ page });
+export const getStaticProps: GetStaticProps = async () => {
+  const reviews = await getReviews({ page: 1 });
 
   return {
-    props: { reviews, page },
+    props: { reviews },
+    revalidate: 60 * 60 * 6,
   };
 };

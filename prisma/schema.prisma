@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Account {
-  id                 String  @id @default(cuid())
+  id                 String       @id @default(cuid())
   userId             String
   type               String
   provider           String
@@ -28,10 +28,17 @@ model Account {
   session_state      String?
   oauth_token_secret String?
   oauth_token        String?
+  lastSavedAlbum     String?
+  savedAlbums        SavedAlbum[] @relation(references: [uri])
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+}
+
+model SavedAlbum {
+  uri     String    @id @unique
+  reviews Account[] @relation(references: [id])
 }
 
 model Session {
@@ -47,7 +54,7 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  image         String?
+  image         String?   @db.VarChar(400)
   accounts      Account[]
   sessions      Session[]
 }

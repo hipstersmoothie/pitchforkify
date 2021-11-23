@@ -183,57 +183,54 @@ export const ReviewGrid = ({
 }: ReviewGridProps) => {
   const bottomRef = useRef<HTMLDivElement>();
   const router = useRouter();
-  const { data, isFetchingNextPage, fetchNextPage, hasNextPage } =
-    useInfiniteQuery(
-      endpoint,
-      async ({
-        pageParam,
-      }: {
-        pageParam?: { page: number; cursor?: number };
-      }) => {
-        const res = await fetch(
-          `/api/${endpoint}?${
-            pageParam.cursor
-              ? `cursor=${pageParam.cursor}`
-              : `page=${pageParam.page}`
-          }`,
-          { method: "POST", body }
-        );
-        const data = await res.json();
-        router.replace(
-          `/${endpoint === "favorites" ? "profile" : ""}?page=${
-            pageParam.page
-          }`,
-          undefined,
+  const { data, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(
+    endpoint,
+    async ({
+      pageParam,
+    }: {
+      pageParam?: { page: number; cursor?: number };
+    }) => {
+      const res = await fetch(
+        `/api/${endpoint}?${
+          pageParam.cursor
+            ? `cursor=${pageParam.cursor}`
+            : `page=${pageParam.page}`
+        }`,
+        { method: "POST", body }
+      );
+      const data = await res.json();
+      router.replace(
+        `/${endpoint === "favorites" ? "profile" : ""}?page=${pageParam.page}`,
+        undefined,
+        {
+          shallow: true,
+          scroll: false,
+        }
+      );
+      return { pageParam, reviews: data as Review[] };
+    },
+    {
+      initialData: {
+        pages: [
           {
-            shallow: true,
-            scroll: false,
-          }
-        );
-        return { pageParam, reviews: data as Review[] };
+            pageParam: { page },
+            reviews: reviews,
+          },
+        ],
+        pageParams: [{ page }],
       },
-      {
-        initialData: {
-          pages: [
-            {
-              pageParam: { page },
-              reviews: reviews,
-            },
-          ],
-          pageParams: [{ page }],
-        },
-        getNextPageParam: ({ pageParam, reviews }) => {
-          if (!reviews[reviews.length - 1]) {
-            return false;
-          }
+      getNextPageParam: ({ pageParam, reviews }) => {
+        if (!reviews[reviews.length - 1]) {
+          return false;
+        }
 
-          return {
-            page: pageParam.page + 1,
-            cursor: reviews[reviews.length - 1].id,
-          };
-        },
-      }
-    );
+        return {
+          page: pageParam.page + 1,
+          cursor: reviews[reviews.length - 1].id,
+        };
+      },
+    }
+  );
 
   useIntersectionObserver({
     target: bottomRef,
@@ -257,7 +254,7 @@ export const ReviewGrid = ({
         className="flex items-center w-full text-center justify-center"
       >
         <span className=" text-xl my-12 font-medium">
-          {isFetchingNextPage && <LoadingLogoIcon />}
+          {isFetching && <LoadingLogoIcon />}
         </span>
       </div>
     </div>
