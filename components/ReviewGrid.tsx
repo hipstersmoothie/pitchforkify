@@ -76,15 +76,17 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
         alt=""
         layout="responsive"
       />
-      <PlayButton
-        isPlaying={false}
-        className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2  opacity-0 group-hover:block group-hover:opacity-100 transition-opacity"
-        aria-label={`Play ${review.albumTitle}`}
-        onClick={(e) => {
-          e.stopPropagation();
-          playAlbum(review);
-        }}
-      />
+      {review.spotifyAlbum && (
+        <PlayButton
+          isPlaying={false}
+          className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2  opacity-0 group-hover:block group-hover:opacity-100 transition-opacity"
+          aria-label={`Play ${review.albumTitle}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            playAlbum(review);
+          }}
+        />
+      )}
     </div>
   );
 };
