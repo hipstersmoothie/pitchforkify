@@ -13,7 +13,7 @@ export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
     if (session?.error === "RefreshAccessTokenError") {
       signIn("spotify");
     } else if (session?.accessToken) {
-      fetch(`/api/pull-favorites`);
+      fetch("/api/pull-favorites");
     }
   }, [session]);
 

@@ -131,7 +131,7 @@ const ReviewComponent = (review: Review) => {
         </li>
       </Dialog.Trigger>
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
-      <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full">
+      <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12">
         <Dialog.Title asChild className="text-center mt-6 mb-2">
           <div>
             <ArtistList review={review} className="text-2xl mb-2" />
