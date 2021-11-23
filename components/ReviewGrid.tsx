@@ -71,7 +71,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
       {...props}
     >
       <Image
-        src={review.cover}
+        src={review.cover.replace('_160', '_400')}
         height={300}
         width={300}
         alt=""
