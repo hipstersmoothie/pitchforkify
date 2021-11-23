@@ -1,6 +1,7 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import makeClass from "clsx";
+import { useDebouncedCallback } from "use-debounce";
 
 import { formatTime } from "../utils/formatTime";
 
@@ -21,10 +22,12 @@ import { Tooltip } from "./Tooltip";
 
 export const PlayerControls = () => {
   const volumeBeforeMute = useRef<number>(1);
+  const timeUpdateIntervale = useRef<number>(1);
   const spotifyApi = useSpotifyApi();
   const playAlbum = usePlayAlbum();
   const { reviews } = useContext(ReviewsContext);
   const { player } = useContext(PlayerContext);
+  const debouncedSeek = useDebouncedCallback((v) => player?.seek(v), 200);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(100);
   const [playerState, playerStateSet] = useState({
@@ -104,7 +107,7 @@ export const PlayerControls = () => {
 
   // Poll the player state every second
   useEffect(() => {
-    const interval = setInterval(() => {
+    timeUpdateIntervale.current = setInterval(() => {
       if (!player) {
         return;
       }
@@ -129,8 +132,8 @@ export const PlayerControls = () => {
     }, 1000);
 
     return () => {
-      if (interval) {
-        clearInterval(interval);
+      if (timeUpdateIntervale.current) {
+        clearInterval(timeUpdateIntervale.current);
       }
     };
   }, [
@@ -140,6 +143,7 @@ export const PlayerControls = () => {
     playerState.duration,
     reviews,
     setVolume,
+    currentTime,
   ]);
 
   const playPreviousTrack = useCallback(() => {
@@ -248,7 +252,10 @@ export const PlayerControls = () => {
       <ScrubberBar
         value={currentTime}
         max={playerState.duration}
-        onChange={(newTime) => player.seek(newTime)}
+        onChange={(newTime) => {
+          setCurrentTime(newTime);
+          debouncedSeek(newTime);
+        }}
         className="absolute md:hidden inset-x-2 bottom-0 h-1"
       />
 
@@ -284,10 +291,17 @@ export const PlayerControls = () => {
             {formatTime(currentTime / 1000)}
           </div>
           <ScrubberBar
+            className="relative h-5 w-full"
             value={currentTime}
             max={playerState.duration}
-            onChange={(newTime) => player.seek(newTime)}
-            className="relative h-5 w-full"
+            onChange={(newTime) => {
+              if (timeUpdateIntervale.current) {
+                clearInterval(timeUpdateIntervale.current);
+              }
+
+              setCurrentTime(newTime);
+              debouncedSeek(newTime);
+            }}
           />
           <div
             style={{ fontVariantNumeric: "tabular-nums" }}
@@ -325,9 +339,9 @@ export const PlayerControls = () => {
           </Tooltip>
           <ScrubberBar
             max={100}
-            value={volume}
+            value={volume * 100}
             onChange={(newVolume) => {
-              setVolume(newVolume);
+              setVolume(newVolume / 100);
               player.setVolume(newVolume / 100);
             }}
             className="relative w-[100px] h-4"

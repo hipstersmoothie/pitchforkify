@@ -1,6 +1,4 @@
 import makeClass from "clsx";
-import { useCallback, useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
 import * as Slider from "@radix-ui/react-slider";
 
 interface ScrubberBarProps
@@ -16,22 +14,11 @@ export const ScrubberBar = ({
   className,
   onChange,
 }: ScrubberBarProps) => {
-  const [internalValue, internalValueSet] = useState(value);
-  const debouncedOnChange = useDebouncedCallback(onChange, 200);
-
-  const setValue = useCallback(
-    (newValue: number) => {
-      internalValueSet(newValue);
-      debouncedOnChange(newValue);
-    },
-    [debouncedOnChange]
-  );
-
   return (
     <Slider.Root
-      value={[internalValue]}
+      value={[value]}
       max={max}
-      onValueChange={([newValue]) => setValue(newValue)}
+      onValueChange={([newValue]) => onChange(newValue)}
       className={makeClass(
         "cursor-pointer rounded group flex items-center select-none",
         className
