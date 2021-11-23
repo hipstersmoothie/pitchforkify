@@ -16,6 +16,8 @@ import { PauseIcon } from "./icons/PauseIcon";
 import { PlayIcon } from "./icons/PlayIcon";
 import { ScrubberBar } from "./ScrubberBar";
 import { VolumeIcon } from "./icons/VolumeIcon";
+import { HomeIcon } from "./icons/HomeIcon";
+import { Tooltip } from "./Tooltip";
 
 export const PlayerControls = () => {
   const volumeBeforeMute = useRef<number>(1);
@@ -219,12 +221,20 @@ export const PlayerControls = () => {
               {playerState.artist}
             </div>
           </div>
-          <button
-            onClick={toggleFavorite}
-            style={{ fill: playerState.isSaved ? "red" : undefined }}
+          <Tooltip
+            message={
+              playerState.isSaved
+                ? "Remove from Your Library"
+                : "Save to Your Library"
+            }
           >
-            {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
-          </button>
+            <button
+              onClick={toggleFavorite}
+              style={{ fill: playerState.isSaved ? "red" : undefined }}
+            >
+              {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
+            </button>
+          </Tooltip>
         </div>
 
         <button
@@ -244,22 +254,26 @@ export const PlayerControls = () => {
 
       <div className="hidden md:flex flex-col items-center">
         <div className="mb-2">
-          <button
-            onClick={playPreviousTrack}
-            className="text-gray-600 hover:text-gray-800 p-2"
-          >
-            <PrevIcon />
-          </button>
+          <Tooltip message="Prev">
+            <button
+              onClick={playPreviousTrack}
+              className="text-gray-600 hover:text-gray-800 p-2"
+            >
+              <PrevIcon />
+            </button>
+          </Tooltip>
           <PlayButton
             isPlaying={playerState.playing}
             onClick={() => player.togglePlay()}
           />
-          <button
-            onClick={playNextTrack}
-            className="text-gray-600 hover:text-gray-800 p-2"
-          >
-            <NextIcon />
-          </button>
+          <Tooltip message="Next">
+            <button
+              onClick={playNextTrack}
+              className="text-gray-600 hover:text-gray-800 p-2"
+            >
+              <NextIcon />
+            </button>
+          </Tooltip>
         </div>
 
         <div className="flex w-full items-center gap-2">
@@ -285,31 +299,40 @@ export const PlayerControls = () => {
       </div>
 
       <div className="flex items-center justify-end h-full w-full p-10">
-        <button
-          className="mr-2"
-          onClick={() => {
-            let newVolume = volumeBeforeMute.current;
+        <Tooltip message="Open in Spotify">
+          <button className="mr-4">
+            <HomeIcon />
+          </button>
+        </Tooltip>
+        <div className="flex items-center">
+          <Tooltip message={volume === 0 ? "Unmute" : "Mute"}>
+            <button
+              className="mr-2"
+              onClick={() => {
+                let newVolume = volumeBeforeMute.current;
 
-            if (volume !== 0) {
-              volumeBeforeMute.current = volume;
-              newVolume = 0;
-            }
+                if (volume !== 0) {
+                  volumeBeforeMute.current = volume;
+                  newVolume = 0;
+                }
 
-            setVolume(newVolume);
-            player.setVolume(newVolume);
-          }}
-        >
-          <VolumeIcon volume={volume} />
-        </button>
-        <ScrubberBar
-          max={100}
-          value={volume}
-          onChange={(newVolume) => {
-            setVolume(newVolume);
-            player.setVolume(newVolume / 100);
-          }}
-          className="relative w-[100px] h-4"
-        />
+                setVolume(newVolume);
+                player.setVolume(newVolume);
+              }}
+            >
+              <VolumeIcon volume={volume} />
+            </button>
+          </Tooltip>
+          <ScrubberBar
+            max={100}
+            value={volume}
+            onChange={(newVolume) => {
+              setVolume(newVolume);
+              player.setVolume(newVolume / 100);
+            }}
+            className="relative w-[100px] h-4"
+          />
+        </div>
       </div>
     </div>
   );

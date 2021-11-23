@@ -15,6 +15,7 @@ import { useRouter } from "next/dist/client/router";
 import { useInfiniteQuery } from "react-query";
 import { useRef } from "react";
 import { Score } from "./Score";
+import { Tooltip } from "./Tooltip";
 
 interface ArtistListProps extends React.ComponentProps<"ul"> {
   review: Review;
@@ -160,11 +161,13 @@ const ReviewComponent = (review: Review) => {
           className="mx-auto w-[fit-content] px-3"
           dangerouslySetInnerHTML={{ __html: review.reviewHtml }}
         />
-        <Dialog.Close asChild>
-          <button className="fixed top-0 right-0 p-6 text-gray-400 hover:text-white">
-            <CloseIcon />
-          </button>
-        </Dialog.Close>
+        <Tooltip message="Close Review">
+          <Dialog.Close asChild>
+            <button className="fixed top-0 right-0 p-6 text-gray-400 hover:text-white">
+              <CloseIcon />
+            </button>
+          </Dialog.Close>
+        </Tooltip>
       </Dialog.Content>
     </Dialog.Root>
   );
