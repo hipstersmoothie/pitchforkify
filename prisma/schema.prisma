@@ -38,7 +38,7 @@ model Account {
 
 model SavedAlbum {
   uri     String    @id @unique
-  reviews Account[] @relation(references: [id])
+  accounts Account[] @relation(references: [id])
 }
 
 model Session {
