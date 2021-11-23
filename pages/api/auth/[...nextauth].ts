@@ -2,6 +2,9 @@ import NextAuth, { User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import SpotifyProvider from "next-auth/providers/spotify";
 import SpotifyWebApi from "spotify-web-api-node";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
+import prisma from "../../../utils/primsa";
 
 /**
  * Takes a token, and returns a new token with updated
@@ -39,6 +42,7 @@ async function refreshAccessToken(token: JWT) {
 }
 
 export default NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     SpotifyProvider({
       clientId: process.env.SPOTIFY_CLIENT_ID,

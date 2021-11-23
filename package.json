@@ -26,6 +26,7 @@
     "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
+    "@next-auth/prisma-adapter": "^0.5.2-next.19",
     "@types/isomorphic-fetch": "^0.0.35",
     "@types/react": "^17.0.35",
     "@types/spotify-web-api-node": "^5.0.4",
