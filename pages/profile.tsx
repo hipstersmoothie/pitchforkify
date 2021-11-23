@@ -2,11 +2,11 @@ import Head from "next/head";
 import { getSession, useSession } from "next-auth/react";
 import Image from "next/image";
 
-import { getAllFavoritesUrisForSession } from "./api/favorites";
 import { ReviewGrid, ReviewGridProps } from "../components/ReviewGrid";
 import prisma from "../utils/primsa";
 import { Score } from "../components/Score";
 import { PersonIcon } from "../components/icons/PersonIcon";
+import { getAllFavoritesUrisForSession } from "./api/favorites";
 
 interface ProfileProps
   extends Omit<ReviewGridProps, "endpoint" | "extraParams" | "reviews"> {
@@ -65,7 +65,7 @@ export default function Profile({
         </div>
       </div>
 
-      <ReviewGrid reviews={[]} page={page} endpoint="favorites" />
+      <ReviewGrid reviews={[]} page={page} endpoint="favorite-reviews" />
     </div>
   );
 }

@@ -7,18 +7,17 @@ import { formatTime } from "../utils/formatTime";
 
 import { PrevIcon } from "../components/icons/PrevIcon";
 import { NextIcon } from "../components/icons/NextIcon";
-import { UnfilledHeartIcon } from "../components/icons/UnfilledHeartIcon";
-import { HeartIcon } from "../components/icons/HeartIcon";
 import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayerContext } from "../utils/PlayerContext";
 import { PlayButton } from "./PlayButton";
-import { ReviewsContext } from "../utils/ReviewsContext";
+import { ReviewsContext } from "../utils/context";
 import { PauseIcon } from "./icons/PauseIcon";
 import { PlayIcon } from "./icons/PlayIcon";
 import { ScrubberBar } from "./ScrubberBar";
 import { VolumeIcon } from "./icons/VolumeIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { Tooltip } from "./Tooltip";
+import { FavoriteButton } from "./FavoriteButton";
 
 export const PlayerControls = () => {
   const volumeBeforeMute = useRef<number>(1);
@@ -189,7 +188,7 @@ export const PlayerControls = () => {
       await spotifyApi.addToMySavedTracks([trackId]);
     }
 
-    playerStateSet({ ...playerState, isSaved });
+    playerStateSet({ ...playerState, isSaved: !isSaved });
   }, [player, playerState, spotifyApi]);
 
   if (!playerState.track) {
@@ -227,20 +226,10 @@ export const PlayerControls = () => {
               {playerState.artist}
             </div>
           </div>
-          <Tooltip
-            message={
-              playerState.isSaved
-                ? "Remove from Your Library"
-                : "Save to Your Library"
-            }
-          >
-            <button
-              onClick={toggleFavorite}
-              style={{ fill: playerState.isSaved ? "red" : undefined }}
-            >
-              {playerState.isSaved ? <HeartIcon /> : <UnfilledHeartIcon />}
-            </button>
-          </Tooltip>
+          <FavoriteButton
+            isSaved={playerState.isSaved}
+            onClick={toggleFavorite}
+          />
         </div>
 
         <button

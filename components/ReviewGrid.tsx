@@ -8,14 +8,26 @@ import { CloseIcon } from "./icons/CloseIcon";
 import { LoadingLogoIcon } from "./icons/LoadingLogo";
 import { Review } from "../pages/api/reviews";
 
-import { usePlayAlbum } from "../utils/useSpotifyApi";
+import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayButton } from "../components/PlayButton";
 import useIntersectionObserver from "../utils/useIntersectionObserver";
 import { useRouter } from "next/dist/client/router";
-import { useInfiniteQuery } from "react-query";
-import { useRef } from "react";
+import { useInfiniteQuery, useQuery } from "react-query";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Score } from "./Score";
 import { Tooltip } from "./Tooltip";
+import { FavoriteButton } from "./FavoriteButton";
+
+export const FavoritesContext = createContext<{ favorites: string[] }>({
+  favorites: [],
+});
 
 interface ArtistListProps extends React.ComponentProps<"ul"> {
   review: Review;
@@ -61,6 +73,42 @@ interface AlbumCoverProps extends React.ComponentProps<"div"> {
 
 const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
   const playAlbum = usePlayAlbum();
+  const spotifyApi = useSpotifyApi();
+  const { favorites } = useContext(FavoritesContext);
+  const isSavedOnDb = favorites.includes(review.spotifyAlbum);
+  const [isSaved, setIsSaved] = useState(isSavedOnDb);
+
+  useEffect(() => {
+    setIsSaved(isSavedOnDb);
+  }, [isSavedOnDb]);
+
+  const toggleFavorite = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+
+      const newIsSaved = !isSaved;
+      const id = review.spotifyAlbum.replace("spotify:album:", "");
+
+      // Update local state
+      setIsSaved(newIsSaved);
+
+      // Update on Spotify
+      if (isSaved) {
+        await spotifyApi.removeFromMySavedAlbums([id]);
+        await fetch("/api/favorites", {
+          method: "DELETE",
+          body: JSON.stringify({ uri: review.spotifyAlbum }),
+        });
+      } else {
+        await spotifyApi.addToMySavedAlbums([id]);
+        await fetch("/api/favorites", {
+          method: "PUT",
+          body: JSON.stringify({ uri: review.spotifyAlbum }),
+        });
+      }
+    },
+    [isSaved, review.spotifyAlbum, spotifyApi]
+  );
 
   return (
     <div
@@ -71,7 +119,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
       {...props}
     >
       <Image
-        src={review.cover.replace('_160', '_400')}
+        src={review.cover.replace("_160", "_400")}
         height={300}
         width={300}
         alt=""
@@ -88,6 +136,16 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
           }}
         />
       )}
+
+      <FavoriteButton
+        className={makeClass(
+          "absolute text-white top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity",
+          isSaved && "opacity-100"
+        )}
+        isSaved={isSaved}
+        onClick={toggleFavorite}
+        size={24}
+      />
     </div>
   );
 };
@@ -176,7 +234,7 @@ const ReviewComponent = (review: Review) => {
 export interface ReviewGridProps {
   reviews: Review[];
   page: number;
-  endpoint: "favorites" | "reviews";
+  endpoint: "favorite-reviews" | "reviews";
   body?: string;
 }
 
@@ -188,6 +246,12 @@ export const ReviewGrid = ({
 }: ReviewGridProps) => {
   const bottomRef = useRef<HTMLDivElement>();
   const router = useRouter();
+
+  const { data: favorites } = useQuery("/api/favorites", async () => {
+    const req = await fetch("/api/favorites");
+    return req.json() as Promise<string[]>;
+  });
+
   const { data, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(
     endpoint,
     async ({
@@ -205,7 +269,9 @@ export const ReviewGrid = ({
       );
       const data = await res.json();
       router.replace(
-        `/${endpoint === "favorites" ? "profile" : ""}?page=${pageParam.page}`,
+        `/${endpoint === "favorite-reviews" ? "profile" : ""}?page=${
+          pageParam.page
+        }`,
         undefined,
         {
           shallow: true,
@@ -245,23 +311,25 @@ export const ReviewGrid = ({
   });
 
   return (
-    <div className="pt-8 md:pt-10 pb-32">
-      <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8">
-        {data.pages.map((page) =>
-          page.reviews.map((review) => (
-            <ReviewComponent key={review.albumTitle} {...review} />
-          ))
-        )}
-      </ul>
+    <FavoritesContext.Provider value={{ favorites: favorites || [] }}>
+      <div className="pt-8 md:pt-10 pb-32">
+        <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8">
+          {data.pages.map((page) =>
+            page.reviews.map((review) => (
+              <ReviewComponent key={review.albumTitle} {...review} />
+            ))
+          )}
+        </ul>
 
-      <div
-        ref={bottomRef}
-        className="flex items-center w-full text-center justify-center"
-      >
-        <span className=" text-xl my-12 font-medium">
-          {isFetching && <LoadingLogoIcon />}
-        </span>
+        <div
+          ref={bottomRef}
+          className="flex items-center w-full text-center justify-center"
+        >
+          <span className=" text-xl my-12 font-medium">
+            {isFetching && <LoadingLogoIcon />}
+          </span>
+        </div>
       </div>
-    </div>
+    </FavoritesContext.Provider>
   );
 };

@@ -8,7 +8,7 @@ import "../styles/global.css";
 import { Header } from "../components/Header";
 import { PlayerControls } from "../components/PlayerControls";
 import { PlayerProvider } from "../utils/PlayerContext";
-import { ReviewsContext } from "../utils/ReviewsContext";
+import { ReviewsContext } from "../utils/context";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +16,6 @@ export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }) {
-
   return (
     <QueryClientProvider client={queryClient}>
       <IdProvider>

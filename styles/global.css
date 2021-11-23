@@ -1,3 +1,7 @@
+:root {
+  --pitchfork-orange: #ff3530;
+}
+
 .sr-only,
 .end-mark,
 .review-detail__featured-tracks {
@@ -27,7 +31,8 @@ body {
 }
 
 .contents a {
-  @apply border-b-2 border-[#ff3530];
+  @apply border-b-2;
+  border-color: var(--pitchfork-orange);
 }
 
 .bestNew {
