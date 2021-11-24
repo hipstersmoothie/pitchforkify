@@ -7,6 +7,7 @@ interface FavoriteButtonProps {
   onClick: React.MouseEventHandler<HTMLButtonElement>;
   className?: string;
   size?: number;
+  fill?: string;
 }
 
 export const FavoriteButton = ({
@@ -14,6 +15,7 @@ export const FavoriteButton = ({
   onClick,
   className,
   size,
+  fill,
 }: FavoriteButtonProps) => {
   return (
     <Tooltip
@@ -22,7 +24,7 @@ export const FavoriteButton = ({
       <button
         className={className}
         onClick={onClick}
-        style={{ fill: isSaved ? "var(--pitchfork-orange)" : undefined }}
+        style={{ fill: isSaved ? "var(--pitchfork-orange)" : fill }}
       >
         {isSaved ? (
           <HeartIcon size={size} />

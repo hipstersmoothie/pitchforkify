@@ -3,6 +3,8 @@ import getYear from "date-fns/getYear";
 import format from "date-fns/format";
 import Image from "next/image";
 import makeClass from "clsx";
+import FastAverageColor from "fast-average-color";
+import contrast from "contrast";
 
 import { CloseIcon } from "./icons/CloseIcon";
 import { LoadingLogoIcon } from "./icons/LoadingLogo";
@@ -25,7 +27,9 @@ import { Score } from "./Score";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
 
-export const FavoritesContext = createContext<{ favorites: string[] }>({
+const averageColor = new FastAverageColor();
+
+const FavoritesContext = createContext<{ favorites: string[] }>({
   favorites: [],
 });
 
@@ -72,15 +76,41 @@ interface AlbumCoverProps extends React.ComponentProps<"div"> {
 }
 
 const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
+  const wrapperRef = useRef<HTMLDivElement>();
   const playAlbum = usePlayAlbum();
   const spotifyApi = useSpotifyApi();
   const { favorites } = useContext(FavoritesContext);
   const isSavedOnDb = favorites.includes(review.spotifyAlbum);
   const [isSaved, setIsSaved] = useState(isSavedOnDb);
+  const [isDarkImage, isDarkImageSet] = useState(false);
 
   useEffect(() => {
     setIsSaved(isSavedOnDb);
   }, [isSavedOnDb]);
+
+  useEffect(() => {
+    const img = wrapperRef.current.querySelector("img");
+
+    async function determineBackgroundColor() {
+      const color = await averageColor.getColorAsync(
+        wrapperRef.current.querySelector("img"),
+        {
+          top: 0,
+          left: 0,
+          width: 40,
+          height: 40,
+        }
+      );
+
+      isDarkImageSet(contrast(color.hex) === "dark");
+    }
+
+    img.addEventListener("load", determineBackgroundColor);
+
+    return () => {
+      img.removeEventListener("load", determineBackgroundColor);
+    };
+  }, []);
 
   const toggleFavorite = useCallback(
     async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -112,6 +142,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 
   return (
     <div
+      ref={wrapperRef}
       className={makeClass(
         className,
         "w-full border border-gray-200 relative group"
@@ -139,9 +170,10 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 
       <FavoriteButton
         className={makeClass(
-          "absolute text-white top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity",
+          "absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity",
           isSaved && "opacity-100"
         )}
+        fill={isDarkImage ? "white" : "black"}
         isSaved={isSaved}
         onClick={toggleFavorite}
         size={24}
