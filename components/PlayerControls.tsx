@@ -260,10 +260,12 @@ export const PlayerControls = () => {
               <PrevIcon />
             </button>
           </Tooltip>
-          <PlayButton
-            isPlaying={playerState.playing}
-            onClick={() => player.togglePlay()}
-          />
+          <Tooltip message={playerState.playing ? "Pause" : "Play"}>
+            <PlayButton
+              isPlaying={playerState.playing}
+              onClick={() => player.togglePlay()}
+            />
+          </Tooltip>
           <Tooltip message="Next">
             <button
               onClick={playNextTrack}
