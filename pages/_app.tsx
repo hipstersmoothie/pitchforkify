@@ -7,7 +7,10 @@ import "@reach/combobox/styles.css";
 import "../styles/global.css";
 
 import { Header } from "../components/Header";
-import { PlayerControls } from "../components/PlayerControls";
+import {
+  PlayerControls,
+  PlayerStateContextProvider,
+} from "../components/PlayerControls";
 import { PlayerProvider } from "../utils/PlayerContext";
 import { ReviewsContext } from "../utils/context";
 
@@ -24,11 +27,13 @@ export default function App({
           <ReviewsContext.Provider value={{ reviews: pageProps.reviews }}>
             {pageProps.layout === "app" ? (
               <PlayerProvider>
-                <Header />
-                <main>
-                  <Component {...pageProps} />
-                </main>
-                <PlayerControls />
+                <PlayerStateContextProvider>
+                  <Header />
+                  <main>
+                    <Component {...pageProps} />
+                  </main>
+                  <PlayerControls />
+                </PlayerStateContextProvider>
               </PlayerProvider>
             ) : (
               <Component {...pageProps} />

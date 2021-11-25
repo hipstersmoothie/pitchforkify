@@ -1,7 +1,17 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import Image from "next/image";
 import makeClass from "clsx";
 import { useDebouncedCallback } from "use-debounce";
+import * as Collapsible from "@radix-ui/react-collapsible";
+import { CaretDownIcon, CaretUpIcon } from "@radix-ui/react-icons";
+import * as DismissableLayer from "@radix-ui/react-dismissable-layer";
 
 import { formatTime } from "../utils/formatTime";
 
@@ -19,37 +29,56 @@ import { HomeIcon } from "./icons/HomeIcon";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
 
-export const PlayerControls = () => {
-  const volumeBeforeMute = useRef<number>(1);
-  const timeUpdateIntervale = useRef<ReturnType<typeof setInterval>>();
-  const spotifyApi = useSpotifyApi();
-  const playAlbum = usePlayAlbum();
-  const { reviews } = useContext(ReviewsContext);
-  const { player } = useContext(PlayerContext);
-  const debouncedSeek = useDebouncedCallback((v) => player?.seek(v), 200);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(100);
-  const [playerState, playerStateSet] = useState({
+interface PlayerState {
+  playing: boolean;
+  album: string;
+  artist: string;
+  track: string;
+  trackId: string;
+  duration: number;
+  cover: string;
+  isSaved: boolean;
+}
+
+interface PlaybackStateContextShape {
+  playerState: PlayerState;
+  setPlayerState: (newState: PlayerState) => void;
+}
+
+const PlayerStateContext = createContext<PlaybackStateContextShape>({
+  playerState: {
     playing: false,
     album: "",
     artist: "",
     track: "",
+    trackId: "",
+    duration: 0,
+    cover: "",
+    isSaved: false,
+  },
+  setPlayerState: () => undefined,
+});
+
+interface PlayerStateContextProviderProps {
+  children: React.ReactNode;
+}
+
+export const PlayerStateContextProvider = ({
+  children,
+}: PlayerStateContextProviderProps) => {
+  const { player } = useContext(PlayerContext);
+  const spotifyApi = useSpotifyApi();
+  const [playerState, setPlayerState] = useState({
+    playing: false,
+    album: "",
+    artist: "",
+    track: "",
+    trackId: "",
     duration: 0,
     cover: "",
     isSaved: false,
   });
 
-  const getAlbumFromOffset = useCallback(
-    (currentUri: string, offset: number) => {
-      const currentReview = reviews.findIndex(
-        (r) => r.spotifyAlbum === currentUri
-      );
-      return reviews[currentReview + offset];
-    },
-    [reviews]
-  );
-
-  // React to playback changes
   useEffect(() => {
     if (!player) {
       return;
@@ -65,14 +94,14 @@ export const PlayerControls = () => {
         body: [isSaved],
       } = await spotifyApi.containsMySavedTracks([trackId]);
 
-      setCurrentTime(newState.position);
-      playerStateSet({
+      setPlayerState({
         playing: !newState.paused,
         album: newState.track_window.current_track.album.uri,
         artist: newState.track_window.current_track.artists
           .map((a) => a.name)
           .join(", "),
         track: newState.track_window.current_track.name,
+        trackId: newState.track_window.current_track.id,
         duration: newState.duration,
         cover: newState.track_window.current_track.album.images[1].url,
         isSaved,
@@ -89,6 +118,152 @@ export const PlayerControls = () => {
       player.removeListener("player_state_changed", playerStateChanged);
     };
   }, [player, spotifyApi]);
+
+  return (
+    <PlayerStateContext.Provider value={{ playerState, setPlayerState }}>
+      {children}
+    </PlayerStateContext.Provider>
+  );
+};
+
+interface TrackSwitcherProps {
+  toggleFavorite: (id: string) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
+
+const TrackSwitcher = ({
+  toggleFavorite,
+  open,
+  setOpen,
+}: TrackSwitcherProps) => {
+  const spotifyApi = useSpotifyApi();
+  const { playerState } = useContext(PlayerStateContext);
+  const [tracks, tracksSet] = useState<
+    (SpotifyApi.TrackObjectSimplified & { isSaved: boolean })[]
+  >([]);
+
+  useEffect(() => {
+    async function fetchTracks() {
+      const tracksData = await spotifyApi.getAlbumTracks(
+        playerState.album.replace("spotify:album:", "")
+      );
+      const savedData = await spotifyApi.containsMySavedTracks(
+        tracksData.body.items.map((i) => i.id)
+      );
+
+      tracksSet(
+        tracksData.body.items.map((track, i) => {
+          return {
+            ...track,
+            isSaved: savedData[i],
+          };
+        })
+      );
+    }
+
+    fetchTracks();
+  }, [playerState.album, spotifyApi]);
+
+  return (
+    <Collapsible.Root
+      className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full flex flex-col items-center z-1 w-screen sm:w-full"
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <Tooltip message={open ? "Hide Track List" : "Show Track List"}>
+        <Collapsible.Trigger className="bg-white border border-b-0 border-gray-300 px-4 py-1 rounded-t-xl">
+          {open ? <CaretDownIcon /> : <CaretUpIcon />}
+        </Collapsible.Trigger>
+      </Tooltip>
+      <Collapsible.Content
+        className="collapsible bg-white border  bottom-0 border-gray-300 rounded-t-xl overflow-auto max-h-96"
+        style={{ width: "calc(100% - 0.5rem)" }}
+      >
+        <DismissableLayer.DismissableLayer
+          onInteractOutside={() => setOpen(false)}
+          onEscapeKeyDown={() => setOpen(false)}
+        >
+          {tracks.map((track, index) => (
+            <div
+              key={track.id}
+              className="rows group flex item-center hover:bg-gray-200 cursor-pointer"
+              aria-label={`Play ${track.name}`}
+              tabIndex={0}
+              onClick={() => {
+                spotifyApi.play({ uris: [track.uri] });
+              }}
+              onKeyDown={(e) => {
+                if (e.key === " " || e.key === "Enter") {
+                  spotifyApi.play({ uris: [track.uri] });
+                }
+              }}
+            >
+              <div className="py-2 px-4 flex items-center justify-center text-right w-12">
+                <span className="group-hover:hidden text-gray-500">
+                  {index + 1}
+                </span>
+                <PlayIcon className="hidden group-hover:block fill-current text-gray-800" />
+              </div>
+              <div className="p-2 flex-1">{track.name}</div>
+              <div
+                className={makeClass(
+                  "py-2 px-1",
+                  track.isSaved
+                    ? "block"
+                    : "opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
+                )}
+              >
+                <FavoriteButton
+                  isSaved={track.isSaved}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(track.id);
+                    tracksSet(
+                      tracks.map((t, i) => {
+                        return {
+                          ...t,
+                          isSaved:
+                            t.id === track.id ? !track.isSaved : t.isSaved,
+                        };
+                      })
+                    );
+                  }}
+                />
+              </div>
+              <div className="py-2 px-4 text-gray-500">
+                {formatTime(track.duration_ms / 1000)}
+              </div>
+            </div>
+          ))}
+        </DismissableLayer.DismissableLayer>
+      </Collapsible.Content>
+    </Collapsible.Root>
+  );
+};
+
+export const PlayerControls = () => {
+  const volumeBeforeMute = useRef<number>(1);
+  const timeUpdateIntervale = useRef<ReturnType<typeof setInterval>>();
+  const spotifyApi = useSpotifyApi();
+  const playAlbum = usePlayAlbum();
+  const { reviews } = useContext(ReviewsContext);
+  const { player } = useContext(PlayerContext);
+  const debouncedSeek = useDebouncedCallback((v) => player?.seek(v), 200);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [volume, setVolume] = useState(100);
+  const { playerState, setPlayerState } = useContext(PlayerStateContext);
+  const [open, setOpen] = useState(false);
+
+  const getAlbumFromOffset = useCallback(
+    (currentUri: string, offset: number) => {
+      const currentReview = reviews.findIndex(
+        (r) => r.spotifyAlbum === currentUri
+      );
+      return reviews[currentReview + offset];
+    },
+    [reviews]
+  );
 
   // Enable "Space" to toggle playback
   useEffect(() => {
@@ -175,21 +350,24 @@ export const PlayerControls = () => {
     });
   }, [getAlbumFromOffset, playAlbum, player]);
 
-  const toggleFavorite = useCallback(async () => {
-    const s = await player.getCurrentState();
-    const trackId = s.track_window.current_track.id;
-    const {
-      body: [isSaved],
-    } = await spotifyApi.containsMySavedTracks([trackId]);
+  const toggleFavorite = useCallback(
+    async (trackId: string) => {
+      const {
+        body: [isSaved],
+      } = await spotifyApi.containsMySavedTracks([trackId]);
 
-    if (isSaved) {
-      await spotifyApi.removeFromMySavedTracks([trackId]);
-    } else {
-      await spotifyApi.addToMySavedTracks([trackId]);
-    }
+      if (isSaved) {
+        await spotifyApi.removeFromMySavedTracks([trackId]);
+      } else {
+        await spotifyApi.addToMySavedTracks([trackId]);
+      }
 
-    playerStateSet({ ...playerState, isSaved: !isSaved });
-  }, [player, playerState, spotifyApi]);
+      if (trackId === playerState.trackId) {
+        setPlayerState({ ...playerState, isSaved: !isSaved });
+      }
+    },
+    [playerState, setPlayerState, spotifyApi]
+  );
 
   if (!playerState.track) {
     return null;
@@ -198,11 +376,17 @@ export const PlayerControls = () => {
   return (
     <div
       className={makeClass(
-        "bg-white h-16 m-1 rounded-md border border-gray-300 shadow-xl fixed left-0 right-0 bottom-0 grid gap-6 border-t items-center z-50 overflow-hidden",
+        "bg-white h-16 m-1 rounded-md border border-gray-300 shadow-xl fixed left-0 right-0 bottom-0 grid gap-6 border-t items-center z-50",
+        open && "rounded-t-none",
         "md:grid-cols-3 md:h-24 md:m-0 md:rounded-none"
       )}
     >
-      <div className="mx-2 flex items-center border-box mb-1 md:mb-0">
+      <TrackSwitcher
+        toggleFavorite={toggleFavorite}
+        open={open}
+        setOpen={setOpen}
+      />
+      <div className={"mx-2 flex items-center border-box my-1 md:mb-0"}>
         <div
           className={makeClass(
             "h-12 w-12 border mr-3 md:mr-4 border-gray-300 rounded overflow-hidden",
@@ -228,7 +412,7 @@ export const PlayerControls = () => {
           </div>
           <FavoriteButton
             isSaved={playerState.isSaved}
-            onClick={toggleFavorite}
+            onClick={() => toggleFavorite(playerState.trackId)}
           />
         </div>
 

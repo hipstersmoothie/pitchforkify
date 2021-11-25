@@ -22,14 +22,16 @@ export const Score = ({
         className={makeClass(
           className,
           !className?.includes("border-") && " border-gray-800",
-          "font-extrabold border-4 rounded-full p-2 mb-3",
-          isBig === true && "text-5xl border-[6px] w-28 h-28 flex items-center justify-center",
-          isBig === "responsive" && "md:text-5xl md:border-[6px] md:w-28 md:h-28 md:flex md:items-center md:justify-center",
+          "font-extrabold border-4 rounded-full p-2 mb-3 w-12 h-12",
+          isBig === true &&
+            "text-5xl border-[6px] w-28 h-28 flex items-center justify-center",
+          isBig === "responsive" &&
+            "md:text-5xl md:border-[6px] md:w-28 md:h-28 md:flex md:items-center md:justify-center",
           isBestNew && "text-[#ff3530] border-[#ff3530]"
         )}
         {...props}
       >
-        {score.toFixed(1)}
+        {score < 10 ? score.toFixed(1) : score}
       </div>
     </div>
   );

@@ -61,8 +61,8 @@ const RangeInput = ({
       onValueChange={onValueChange}
       className="relative cursor-pointer rounded flex items-center select-none w-full"
     >
-      <Slider.Track className="bg-gray-300 h-1 w-full">
-        <Slider.Range className="bg-gray-500 h-1 absolute" />
+      <Slider.Track className="bg-gray-300 h-2 w-full rounded">
+        <Slider.Range className="bg-gray-500 h-2 absolute rounded" />
       </Slider.Track>
       <SliderThumb value={first} />
       <SliderThumb value={last} />
@@ -71,7 +71,7 @@ const RangeInput = ({
 };
 
 const SliderThumb = ({ value }: { value: number }) => (
-  <Slider.Thumb className="group relative block transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow-lg focus:outline-none focus:border-2 focus:border-[#ff3530]">
+  <Slider.Thumb className="group relative block transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow focus:outline-none focus:border-2 focus:border-[#ff3530]">
     <div
       className="opacity-0 group-hover:opacity-100 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-white rounded border border-gray-300 px-2 py-1"
       style={{
@@ -123,7 +123,7 @@ const Switch = ({ checked, id, onCheckedChange, children }: SwitchProps) => {
       <SwitchPrimitive.Root
         id={id}
         className={makeClass(
-          "w-11 h-7 rounded-full relative shadow-lg",
+          "w-11 h-7 rounded-full relative shadow",
           checked ? "bg-[#ff3530]" : "bg-gray-200"
         )}
         checked={checked}
@@ -159,7 +159,7 @@ const GenrePicker = ({ addGenre, removeGenre, active }: GenrePickerProps) => {
     <div>
       <SettingTitle>Genre</SettingTitle>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-2">
         {genres.map((genre) => (
           <Checkbox
             key={genre}

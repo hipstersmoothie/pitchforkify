@@ -27,6 +27,8 @@ async function refreshAccessToken(token: JWT) {
       throw new Error("Couldn't refresh access token!");
     }
 
+    console.log("here refresh", newTokens);
+
     return {
       ...token,
       accessToken: newTokens.access_token,
@@ -63,6 +65,7 @@ export default NextAuth({
     async session({ session, token }) {
       session.accessToken = token.accessToken;
       session.providerAccountId = token.providerAccountId;
+      console.log("session", session);
       return session;
     },
     async jwt({ user, account, token }) {
@@ -72,11 +75,14 @@ export default NextAuth({
         token.refreshToken = account.refresh_token;
         token.accessTokenExpires = account.expires_at;
 
+        console.log("here start", token);
+
         return token;
       }
 
       // Return previous token if the access token has not expired yet
       if (Date.now() < token.accessTokenExpires) {
+        console.log("here not expired");
         return token;
       }
 

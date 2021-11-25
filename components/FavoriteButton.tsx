@@ -2,9 +2,8 @@ import { HeartIcon } from "./icons/HeartIcon";
 import { UnfilledHeartIcon } from "./icons/UnfilledHeartIcon";
 import { Tooltip } from "./Tooltip";
 
-interface FavoriteButtonProps {
+interface FavoriteButtonProps extends React.ComponentProps<"button"> {
   isSaved: boolean;
-  onClick: React.MouseEventHandler<HTMLButtonElement>;
   className?: string;
   size?: number;
   fill?: string;
@@ -12,19 +11,18 @@ interface FavoriteButtonProps {
 
 export const FavoriteButton = ({
   isSaved,
-  onClick,
-  className,
+  style,
   size,
   fill,
+  ...props
 }: FavoriteButtonProps) => {
   return (
     <Tooltip
       message={isSaved ? "Remove from Your Library" : "Save to Your Library"}
     >
       <button
-        className={className}
-        onClick={onClick}
-        style={{ fill: isSaved ? "var(--pitchfork-orange)" : fill }}
+        style={{ ...style, fill: isSaved ? "var(--pitchfork-orange)" : fill }}
+        {...props}
       >
         {isSaved ? (
           <HeartIcon size={size} />

@@ -113,33 +113,28 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
     };
   }, []);
 
-  const toggleFavorite = useCallback(
-    async (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation();
+  const toggleFavorite = useCallback(async () => {
+    const newIsSaved = !isSaved;
+    const id = review.spotifyAlbum.replace("spotify:album:", "");
 
-      const newIsSaved = !isSaved;
-      const id = review.spotifyAlbum.replace("spotify:album:", "");
+    // Update local state
+    setIsSaved(newIsSaved);
 
-      // Update local state
-      setIsSaved(newIsSaved);
-
-      // Update on Spotify
-      if (isSaved) {
-        await spotifyApi.removeFromMySavedAlbums([id]);
-        await fetch("/api/favorites", {
-          method: "DELETE",
-          body: JSON.stringify({ uri: review.spotifyAlbum }),
-        });
-      } else {
-        await spotifyApi.addToMySavedAlbums([id]);
-        await fetch("/api/favorites", {
-          method: "PUT",
-          body: JSON.stringify({ uri: review.spotifyAlbum }),
-        });
-      }
-    },
-    [isSaved, review.spotifyAlbum, spotifyApi]
-  );
+    // Update on Spotify
+    if (isSaved) {
+      await spotifyApi.removeFromMySavedAlbums([id]);
+      await fetch("/api/favorites", {
+        method: "DELETE",
+        body: JSON.stringify({ uri: review.spotifyAlbum }),
+      });
+    } else {
+      await spotifyApi.addToMySavedAlbums([id]);
+      await fetch("/api/favorites", {
+        method: "PUT",
+        body: JSON.stringify({ uri: review.spotifyAlbum }),
+      });
+    }
+  }, [isSaved, review.spotifyAlbum, spotifyApi]);
 
   return (
     <div
@@ -157,41 +152,81 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
         alt=""
         layout="responsive"
       />
+      <FavoriteButton
+        className={makeClass(
+          "absolute top-4 left-4 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity",
+          isSaved && "opacity-100"
+        )}
+        fill={isDarkImage ? "white" : "black"}
+        isSaved={isSaved}
+        size={24}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFavorite();
+        }}
+        onKeyDown={(e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleFavorite();
+          }
+        }}
+      />
       {review.spotifyAlbum && (
         <PlayButton
           isPlaying={false}
-          className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2  opacity-0 group-hover:block group-hover:opacity-100 transition-opacity"
+          className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
           aria-label={`Play ${review.albumTitle}`}
           onClick={(e) => {
             e.stopPropagation();
             playAlbum(review);
           }}
+          onKeyDown={(e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.stopPropagation();
+              e.preventDefault();
+              playAlbum(review);
+            }
+          }}
         />
       )}
-
-      <FavoriteButton
-        className={makeClass(
-          "absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity",
-          isSaved && "opacity-100"
-        )}
-        fill={isDarkImage ? "white" : "black"}
-        isSaved={isSaved}
-        onClick={toggleFavorite}
-        size={24}
-      />
     </div>
   );
 };
 
 const ReviewComponent = (review: Review) => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Dialog.Root modal={true}>
+    <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>
       <Dialog.Trigger
         className="flex"
         asChild
         style={{ WebkitAppearance: "none" }}
       >
-        <li className="mb-6 md:mb-10 flex flex-col items-center text-center cursor-pointer">
+        <li
+          className="review-item mb-6 md:mb-10 flex flex-col items-center text-center cursor-pointer"
+          tabIndex={0}
+          aria-label={`Open Review for ${review.albumTitle}`}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight" && document.activeElement.nextSibling) {
+              e.stopPropagation();
+              e.preventDefault();
+              (document.activeElement.nextSibling as HTMLElement).focus();
+            } else if (
+              e.key === "ArrowLeft" &&
+              document.activeElement.previousSibling
+            ) {
+              e.stopPropagation();
+              e.preventDefault();
+              (document.activeElement.previousSibling as HTMLElement).focus();
+            } else if (e.key === " " || e.key === "Enter") {
+              setOpen(true);
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          }}
+        >
           <AlbumCover
             review={review}
             className={makeClass("mb-4", review.isBestNew && "bestNew")}
@@ -223,6 +258,13 @@ const ReviewComponent = (review: Review) => {
       </Dialog.Trigger>
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
       <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12">
+        <Tooltip message="Close Review">
+          <Dialog.Close asChild>
+            <button className="fixed top-0 right-0 p-6 text-gray-400 hover:text-white">
+              <CloseIcon />
+            </button>
+          </Dialog.Close>
+        </Tooltip>
         <Dialog.Title asChild className="text-center mt-6 mb-2">
           <div>
             <ArtistList review={review} className="text-2xl mb-2" />
@@ -252,13 +294,6 @@ const ReviewComponent = (review: Review) => {
           className="mx-auto w-[fit-content] px-3"
           dangerouslySetInnerHTML={{ __html: review.reviewHtml }}
         />
-        <Tooltip message="Close Review">
-          <Dialog.Close asChild>
-            <button className="fixed top-0 right-0 p-6 text-gray-400 hover:text-white">
-              <CloseIcon />
-            </button>
-          </Dialog.Close>
-        </Tooltip>
       </Dialog.Content>
     </Dialog.Root>
   );
