@@ -5,9 +5,15 @@ import { useEffect } from "react";
 
 import { getReviews } from "./api/reviews";
 import { ReviewGrid, ReviewGridProps } from "../components/ReviewGrid";
+import {
+  GridFilter,
+  hasActiveFilters,
+  useGridFilters,
+} from "../components/GridFilter";
 
 export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
   const { data: session } = useSession();
+  const [filters, setFilters] = useGridFilters();
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
@@ -28,7 +34,14 @@ export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <ReviewGrid reviews={reviews} page={1} endpoint="reviews" />
+      <GridFilter filters={filters} setFilters={setFilters} />
+
+      <ReviewGrid
+        reviews={hasActiveFilters(filters) ? [] : reviews}
+        filters={filters}
+        page={1}
+        endpoint="reviews"
+      />
     </div>
   );
 }
@@ -37,7 +50,7 @@ export const getStaticProps: GetStaticProps = async () => {
   const reviews = await getReviews({ page: 1 });
 
   return {
-    props: { reviews },
+    props: { reviews, layout: "app" },
     revalidate: 60 * 60 * 6,
   };
 };

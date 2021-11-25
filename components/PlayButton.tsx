@@ -2,19 +2,20 @@ import makeClass from "clsx";
 
 import { PlayIcon } from "../components/icons/PlayIcon";
 import { PauseIcon } from "../components/icons/PauseIcon";
+import { forwardRef } from "react";
 
 interface PlayButtonProps
   extends Omit<React.ComponentPropsWithoutRef<"button">, "children"> {
   isPlaying: boolean;
 }
 
-export const PlayButton = ({
-  isPlaying,
-  className,
-  ...props
-}: PlayButtonProps) => {
+export const PlayButton = forwardRef(function PlayButton(
+  { isPlaying, className, ...props }: PlayButtonProps,
+  ref: React.Ref<HTMLButtonElement>
+) {
   return (
     <button
+      ref={ref}
       aria-label={isPlaying ? "pause" : "play"}
       className={makeClass(
         className,
@@ -25,4 +26,4 @@ export const PlayButton = ({
       {isPlaying ? <PauseIcon /> : <PlayIcon />}
     </button>
   );
-};
+});

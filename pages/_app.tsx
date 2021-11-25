@@ -3,6 +3,7 @@ import { IdProvider } from "@radix-ui/react-id";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import "tailwindcss/tailwind.css";
+import "@reach/combobox/styles.css";
 import "../styles/global.css";
 
 import { Header } from "../components/Header";
@@ -21,13 +22,17 @@ export default function App({
       <IdProvider>
         <SessionProvider session={session}>
           <ReviewsContext.Provider value={{ reviews: pageProps.reviews }}>
-            <PlayerProvider>
-              <Header />
-              <main>
-                <Component {...pageProps} />
-              </main>
-              <PlayerControls />
-            </PlayerProvider>
+            {pageProps.layout === "app" ? (
+              <PlayerProvider>
+                <Header />
+                <main>
+                  <Component {...pageProps} />
+                </main>
+                <PlayerControls />
+              </PlayerProvider>
+            ) : (
+              <Component {...pageProps} />
+            )}
           </ReviewsContext.Provider>
         </SessionProvider>
       </IdProvider>

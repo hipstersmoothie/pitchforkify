@@ -57,7 +57,7 @@ export const Header = () => {
       )}
       style={{ transition: "top 0.5s" }}
     >
-      <div className="max-w-6xl px-3 md:px-8 w-full mx-auto flex justify-between items-center">
+      <div className="max-w-6xl px-3 sm:px-8 w-full mx-auto flex justify-between items-center">
         <Link passHref href="/">
           <a className="flex items-center">
             <span className="w-10 h-10 mr-4">

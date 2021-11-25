@@ -25,7 +25,7 @@ export const Score = ({
           "font-extrabold border-4 rounded-full p-2 mb-3",
           isBig === true && "text-5xl border-[6px] w-28 h-28 flex items-center justify-center",
           isBig === "responsive" && "md:text-5xl md:border-[6px] md:w-28 md:h-28 md:flex md:items-center md:justify-center",
-          isBestNew && "text-[var(--pitchfork-orange)] border-[var(--pitchfork-orange)]"
+          isBestNew && "text-[#ff3530] border-[#ff3530]"
         )}
         {...props}
       >

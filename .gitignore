@@ -33,3 +33,7 @@ yarn-error.log*
 # vercel
 .vercel
 .env
+
+public/artists.json
+public/labels.json
+public/genres.json

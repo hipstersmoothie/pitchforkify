@@ -103,6 +103,7 @@ export async function getServerSideProps(ctx) {
       page,
       score: counts._avg.score || 0,
       totalAlbumsWithReviews: counts._count.id,
+      layout: "app",
     },
   };
 }

@@ -5,15 +5,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "pull-data": "node -r esbuild-register ./scripts/pull-data.ts"
   },
   "dependencies": {
     "@prisma/client": "^3.5.0",
+    "@radix-ui/react-checkbox": "^0.1.1",
+    "@radix-ui/react-collapsible": "^0.1.1",
     "@radix-ui/react-dialog": "^0.1.1",
     "@radix-ui/react-dropdown-menu": "^0.1.1",
+    "@radix-ui/react-icons": "^1.0.3",
     "@radix-ui/react-id": "^0.1.1",
     "@radix-ui/react-slider": "^0.1.1",
+    "@radix-ui/react-switch": "^0.1.1",
     "@radix-ui/react-tooltip": "^0.1.1",
+    "@reach/combobox": "^0.16.4",
     "chalk": "^4.1.2",
     "cheerio": "^1.0.0-rc.10",
     "chunk-promise": "^1.2.1",
@@ -28,6 +34,7 @@
     "react-dom": "17.0.2",
     "react-query": "^3.33.1",
     "spotify-web-api-node": "^5.0.2",
+    "string-similarity": "^4.0.4",
     "use-debounce": "^7.0.1"
   },
   "devDependencies": {
@@ -36,6 +43,7 @@
     "@types/react": "^17.0.35",
     "@types/spotify-web-api-node": "^5.0.4",
     "@types/spotify-web-playback-sdk": "^0.1.12",
+    "@types/string-similarity": "^4.0.0",
     "autoprefixer": "^10.4.0",
     "dotenv": "^10.0.0",
     "esbuild": "^0.13.14",

@@ -26,6 +26,7 @@ import {
 import { Score } from "./Score";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
+import { GridFilters } from "./GridFilter";
 
 const averageColor = new FastAverageColor();
 
@@ -267,15 +268,16 @@ export interface ReviewGridProps {
   reviews: Review[];
   page: number;
   endpoint: "favorite-reviews" | "reviews";
-  body?: string;
+  filters?: GridFilters;
 }
 
 export const ReviewGrid = ({
   reviews,
   page,
   endpoint,
-  body,
+  filters,
 }: ReviewGridProps) => {
+  const firstRender = useRef(true);
   const bottomRef = useRef<HTMLDivElement>();
   const router = useRouter();
 
@@ -284,21 +286,66 @@ export const ReviewGrid = ({
     return req.json() as Promise<string[]>;
   });
 
-  const { data, isFetching, fetchNextPage, hasNextPage } = useInfiniteQuery(
+  const {
+    data,
+    isFetching,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    isRefetching,
+    remove,
+  } = useInfiniteQuery(
     endpoint,
     async ({
       pageParam,
     }: {
       pageParam?: { page: number; cursor?: number };
     }) => {
-      const res = await fetch(
-        `/api/${endpoint}?${
-          pageParam.cursor
-            ? `cursor=${pageParam.cursor}`
-            : `page=${pageParam.page}`
-        }`,
-        { method: "POST", body }
-      );
+      const params = new URLSearchParams();
+
+      if (pageParam.cursor) {
+        params.set("cursor", String(pageParam.cursor));
+      } else {
+        params.set("page", String(pageParam.page));
+      }
+
+      if (filters?.genre.length) {
+        params.set("genre", encodeURIComponent(filters.genre.join(",")));
+      }
+
+      if (filters?.isBestNew) {
+        params.set("isBestNew", "1");
+      }
+
+      if (filters?.yearRange) {
+        params.set("yearStart", String(filters.yearRange.start));
+        params.set("yearEnd", String(filters.yearRange.end));
+      }
+
+      if (filters?.score) {
+        params.set("scoreStart", String(filters.score.start));
+        params.set("scoreEnd", String(filters.score.end));
+      }
+
+      if (filters?.search) {
+        const artists = filters.search
+          .filter((i) => i.type === "artist")
+          .map((i) => i.id);
+        const labels = filters.search
+          .filter((i) => i.type === "label")
+          .map((i) => i.id);
+
+        if (artists.length) {
+          params.set("artists", encodeURIComponent(artists.join(",")));
+        }
+
+        if (labels.length) {
+          params.set("labels", encodeURIComponent(labels.join(",")));
+        }
+      }
+
+      console.log("DEBUG", `/api/${endpoint}?${params.toString()}`);
+      const res = await fetch(`/api/${endpoint}?${params.toString()}`);
       const data = await res.json();
       router.replace(
         `/${endpoint === "favorite-reviews" ? "profile" : ""}?page=${
@@ -342,9 +389,19 @@ export const ReviewGrid = ({
     rootMargin: "50%",
   });
 
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
+    remove();
+    refetch();
+  }, [filters, refetch, remove]);
+
   return (
     <FavoritesContext.Provider value={{ favorites: favorites || [] }}>
-      <div className="pt-8 md:pt-10 pb-32">
+      <div className="pt-6 md:pt-10 pb-32">
         <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8">
           {data.pages.map((page) =>
             page.reviews.map((review) => (
@@ -357,8 +414,8 @@ export const ReviewGrid = ({
           ref={bottomRef}
           className="flex items-center w-full text-center justify-center"
         >
-          <span className=" text-xl my-12 font-medium">
-            {isFetching && <LoadingLogoIcon />}
+          <span className="text-xl my-12 font-medium">
+            {(isFetching || isRefetching) && <LoadingLogoIcon />}
           </span>
         </div>
       </div>

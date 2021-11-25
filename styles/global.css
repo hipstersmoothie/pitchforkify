@@ -17,6 +17,10 @@ body {
   font-family: Walfork, Walsheim, "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+.setting-header {
+  font-family: Walfork, helvetica, sans-serif;
+}
+
 .contents p {
   @apply md:text-lg my-8;
 }
