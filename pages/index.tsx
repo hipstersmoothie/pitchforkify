@@ -35,7 +35,6 @@ export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
       </Head>
 
       <GridFilter filters={filters} setFilters={setFilters} />
-
       <ReviewGrid
         reviews={hasActiveFilters(filters) ? [] : reviews}
         filters={filters}

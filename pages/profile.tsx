@@ -7,6 +7,7 @@ import prisma from "../utils/primsa";
 import { Score } from "../components/Score";
 import { PersonIcon } from "../components/icons/PersonIcon";
 import { getAllFavoritesUrisForSession } from "./api/favorites";
+import { GridFilter, useGridFilters } from "../components/GridFilter";
 
 interface ProfileProps
   extends Omit<ReviewGridProps, "endpoint" | "extraParams" | "reviews"> {
@@ -20,6 +21,7 @@ export default function Profile({
   totalAlbumsWithReviews,
 }: ProfileProps) {
   const { data: session } = useSession();
+  const [filters, setFilters] = useGridFilters();
 
   if (!session) {
     return null;
@@ -65,7 +67,13 @@ export default function Profile({
         </div>
       </div>
 
-      <ReviewGrid reviews={[]} page={page} endpoint="favorite-reviews" />
+      <GridFilter filters={filters} setFilters={setFilters} />
+      <ReviewGrid
+        reviews={[]}
+        filters={filters}
+        page={page}
+        endpoint="favorite-reviews"
+      />
     </div>
   );
 }
