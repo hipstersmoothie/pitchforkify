@@ -194,12 +194,16 @@ const TrackSwitcher = ({
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={() => {
-                spotifyApi.play({
-                  context_uri: playerState.album,
-                  offset: {
-                    uri: track.uri,
-                  },
-                });
+                if (playerState.playing && playerState.trackId === track.id) {
+                  spotifyApi.pause();
+                } else {
+                  spotifyApi.play({
+                    context_uri: playerState.album,
+                    offset: {
+                      uri: track.uri,
+                    },
+                  });
+                }
               }}
               onKeyDown={(e) => {
                 if (
@@ -225,10 +229,16 @@ const TrackSwitcher = ({
               }}
             >
               <div className="py-2 px-4 flex items-center justify-center text-right w-12">
-                <span className="group-hover:hidden text-gray-500">
-                  {index + 1}
-                </span>
-                <PlayIcon className="hidden group-hover:block fill-current text-gray-800" />
+                {playerState.playing && playerState.trackId === track.id ? (
+                  <PauseIcon className="fill-current text-gray-800" />
+                ) : (
+                  <>
+                    <span className="group-hover:hidden text-gray-500">
+                      {index + 1}
+                    </span>
+                    <PlayIcon className="hidden group-hover:block fill-current text-gray-800" />
+                  </>
+                )}
               </div>
               <div className="p-2 flex-1">{track.name}</div>
               <div
