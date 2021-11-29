@@ -36,7 +36,11 @@ export const usePlayAlbum = () => {
       const device_id = playerId || appPlayer.id;
 
       spotifyApi
-        .play({ context_uri: review.spotifyAlbum, device_id })
+        .play({
+          context_uri: review.spotifyAlbum,
+          offset: { position: 0 },
+          device_id,
+        })
         .then(() => {
           // @ts-ignore
           player.activateElement();

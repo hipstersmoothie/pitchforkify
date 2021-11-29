@@ -28,6 +28,16 @@ import { VolumeIcon } from "./icons/VolumeIcon";
 import { HomeIcon } from "./icons/HomeIcon";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
+import { Review } from "../pages/api/reviews";
+
+const getAlbumFromOffset = (
+  reviews: Review[],
+  currentUri: string,
+  offset: number
+) => {
+  const currentReview = reviews.findIndex((r) => r.spotifyAlbum === currentUri);
+  return reviews[currentReview + offset];
+};
 
 interface PlayerState {
   playing: boolean;
@@ -68,6 +78,9 @@ export const PlayerStateContextProvider = ({
 }: PlayerStateContextProviderProps) => {
   const { player } = useContext(PlayerContext);
   const spotifyApi = useSpotifyApi();
+  const tryingToPlayNextAlbum = useRef(false);
+  const { reviews } = useContext(ReviewsContext);
+  const playAlbum = usePlayAlbum();
   const [playerState, setPlayerState] = useState({
     playing: false,
     album: "",
@@ -89,10 +102,51 @@ export const PlayerStateContextProvider = ({
         return;
       }
 
+      // If an album ends it will go to the first song and stop playing.
+      // This code starts playing the next album when that happens
+      if (
+        newState.position === 0 &&
+        newState.paused &&
+        newState.track_window.next_tracks.length === 0
+      ) {
+        const nextAlbum = getAlbumFromOffset(reviews, newState.context.uri, 1);
+
+        if (nextAlbum) {
+          playAlbum(nextAlbum);
+          return;
+        }
+      }
+
+      if (
+        reviews.findIndex(
+          (r) =>
+            r.spotifyAlbum === newState.track_window.current_track.album.uri
+        ) === -1
+      ) {
+        const nextAlbum = getAlbumFromOffset(
+          reviews,
+          newState.track_window.previous_tracks[
+            newState.track_window.previous_tracks.length - 1
+          ].album.uri,
+          1
+        );
+
+        if (nextAlbum) {
+          if (!tryingToPlayNextAlbum.current) {
+            tryingToPlayNextAlbum.current = true;
+            playAlbum(nextAlbum);
+          }
+
+          return;
+        }
+      }
+
       const trackId = newState.track_window.current_track.id;
       const {
         body: [isSaved],
       } = await spotifyApi.containsMySavedTracks([trackId]);
+
+      tryingToPlayNextAlbum.current = false;
 
       setPlayerState({
         playing: !newState.paused,
@@ -117,7 +171,7 @@ export const PlayerStateContextProvider = ({
 
       player.removeListener("player_state_changed", playerStateChanged);
     };
-  }, [player, spotifyApi]);
+  }, [playAlbum, player, reviews, spotifyApi]);
 
   return (
     <PlayerStateContext.Provider value={{ playerState, setPlayerState }}>
@@ -291,16 +345,6 @@ export const PlayerControls = () => {
   const { playerState, setPlayerState } = useContext(PlayerStateContext);
   const [open, setOpen] = useState(false);
 
-  const getAlbumFromOffset = useCallback(
-    (currentUri: string, offset: number) => {
-      const currentReview = reviews.findIndex(
-        (r) => r.spotifyAlbum === currentUri
-      );
-      return reviews[currentReview + offset];
-    },
-    [reviews]
-  );
-
   // Enable "Space" to toggle playback
   useEffect(() => {
     function pressSpace(e: KeyboardEvent) {
@@ -331,17 +375,11 @@ export const PlayerControls = () => {
 
         if (s.position <= playerState.duration) {
           setCurrentTime(s.position);
-        } else if (s.track_window.next_tracks.length === 0) {
-          const nextAlbum = getAlbumFromOffset(s.context.uri, 1);
-
-          if (nextAlbum) {
-            playAlbum(nextAlbum);
-          }
         }
       });
 
       player.getVolume().then(setVolume);
-    }, 100);
+    }, 1000);
 
     return () => {
       if (timeUpdateIntervale.current) {
@@ -349,7 +387,6 @@ export const PlayerControls = () => {
       }
     };
   }, [
-    getAlbumFromOffset,
     playAlbum,
     player,
     playerState.duration,
@@ -361,7 +398,7 @@ export const PlayerControls = () => {
   const playPreviousTrack = useCallback(() => {
     player.getCurrentState().then((s) => {
       if (s?.track_window.previous_tracks.length === 0) {
-        const prevAlbum = getAlbumFromOffset(s.context.uri, -1);
+        const prevAlbum = getAlbumFromOffset(reviews, s.context.uri, -1);
 
         if (prevAlbum) {
           playAlbum(prevAlbum);
@@ -370,12 +407,12 @@ export const PlayerControls = () => {
         player.previousTrack();
       }
     });
-  }, [getAlbumFromOffset, playAlbum, player]);
+  }, [reviews, playAlbum, player]);
 
   const playNextTrack = useCallback(() => {
     player.getCurrentState().then((s) => {
       if (s?.track_window.next_tracks.length === 0) {
-        const nextAlbum = getAlbumFromOffset(s.context.uri, 1);
+        const nextAlbum = getAlbumFromOffset(reviews, s.context.uri, 1);
 
         if (nextAlbum) {
           playAlbum(nextAlbum);
@@ -384,7 +421,7 @@ export const PlayerControls = () => {
         player.nextTrack();
       }
     });
-  }, [getAlbumFromOffset, playAlbum, player]);
+  }, [reviews, playAlbum, player]);
 
   const toggleFavorite = useCallback(
     async (trackId: string) => {
