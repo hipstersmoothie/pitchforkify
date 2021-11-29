@@ -112,26 +112,6 @@ export const PlayerStateContextProvider = ({
         const nextAlbum = getAlbumFromOffset(reviews, newState.context.uri, 1);
 
         if (nextAlbum) {
-          playAlbum(nextAlbum);
-          return;
-        }
-      }
-
-      if (
-        reviews.findIndex(
-          (r) =>
-            r.spotifyAlbum === newState.track_window.current_track.album.uri
-        ) === -1
-      ) {
-        const nextAlbum = getAlbumFromOffset(
-          reviews,
-          newState.track_window.previous_tracks[
-            newState.track_window.previous_tracks.length - 1
-          ].album.uri,
-          1
-        );
-
-        if (nextAlbum) {
           if (!tryingToPlayNextAlbum.current) {
             tryingToPlayNextAlbum.current = true;
             playAlbum(nextAlbum);

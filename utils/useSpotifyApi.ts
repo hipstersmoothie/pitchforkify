@@ -21,13 +21,17 @@ export const useSpotifyApi = () => {
 export const usePlayAlbum = () => {
   const { data: session } = useSession();
   const { playerId, player } = useContext(PlayerContext);
-  const spotifyApi = useSpotifyApi();
 
   return useCallback(
     async (review: Review) => {
       if (!session) {
         return signIn("spotify");
       }
+
+      const spotifyApi = new SpotifyWebApi({
+        clientId: process.env.SPOTIFY_CLIENT_ID,
+        ...session,
+      });
 
       const {
         body: { devices },
@@ -46,6 +50,6 @@ export const usePlayAlbum = () => {
           player.activateElement();
         });
     },
-    [player, playerId, session, spotifyApi]
+    [player, playerId, session]
   );
 };
