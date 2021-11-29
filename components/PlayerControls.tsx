@@ -194,7 +194,12 @@ const TrackSwitcher = ({
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={() => {
-                spotifyApi.play({ uris: [track.uri] });
+                spotifyApi.play({
+                  context_uri: playerState.album,
+                  offset: {
+                    uri: track.uri,
+                  },
+                });
               }}
               onKeyDown={(e) => {
                 if (
@@ -326,7 +331,7 @@ export const PlayerControls = () => {
       });
 
       player.getVolume().then(setVolume);
-    }, 1000);
+    }, 100);
 
     return () => {
       if (timeUpdateIntervale.current) {

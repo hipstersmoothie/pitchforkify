@@ -79,8 +79,6 @@ export async function pullFavorites(token: string, providerAccountId: string) {
   const favoriteAlbums = await getNewSavedAlbums();
   const uris = favoriteAlbums.map((album) => album.album.uri);
 
-  console.log("New Favorites", { uris });
-
   await chunkPromise(
     [...new Set(uris)].map((uri) => () => {
       console.log("Adding favorite", uri);
