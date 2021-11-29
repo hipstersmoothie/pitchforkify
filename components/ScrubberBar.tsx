@@ -27,7 +27,7 @@ export const ScrubberBar = ({
       <Slider.Track className="bg-gray-400 h-1 w-full">
         <Slider.Range className="bg-gray-700 h-1 absolute" />
       </Slider.Track>
-      <Slider.Thumb className="block opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow-lg" />
+      <Slider.Thumb className="block opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow-lg  focus:outline-none keyboard-focus:shadow-focus" />
     </Slider.Root>
   );
 };

@@ -10,6 +10,7 @@
     "postinstall": "npx prisma generate && yarn pull-data"
   },
   "dependencies": {
+    "@design-systems/hooks": "^4.13.1",
     "@prisma/client": "^3.5.0",
     "@radix-ui/react-checkbox": "^0.1.1",
     "@radix-ui/react-collapsible": "^0.1.1",

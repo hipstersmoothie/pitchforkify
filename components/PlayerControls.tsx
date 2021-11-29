@@ -172,7 +172,10 @@ const TrackSwitcher = ({
       onOpenChange={setOpen}
     >
       <Tooltip message={open ? "Hide Track List" : "Show Track List"}>
-        <Collapsible.Trigger className="bg-white border border-b-0 border-gray-300 px-4 py-1 rounded-t-xl">
+        <Collapsible.Trigger
+          id="track-list-toggle"
+          className="bg-white border border-b-0 border-gray-300 px-4 py-1 rounded-t-xl focus:outline-none keyboard-focus:shadow-focus"
+        >
           {open ? <CaretDownIcon /> : <CaretUpIcon />}
         </Collapsible.Trigger>
       </Tooltip>
@@ -187,13 +190,30 @@ const TrackSwitcher = ({
           {tracks.map((track, index) => (
             <div
               key={track.id}
-              className="rows group flex item-center hover:bg-gray-200 cursor-pointer"
+              className="rows group flex item-center hover:bg-gray-200 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={() => {
                 spotifyApi.play({ uris: [track.uri] });
               }}
               onKeyDown={(e) => {
+                if (
+                  e.key === "ArrowDown" &&
+                  document.activeElement.nextSibling
+                ) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  (document.activeElement.nextSibling as HTMLElement).focus();
+                } else if (
+                  e.key === "ArrowUp" &&
+                  document.activeElement.previousSibling
+                ) {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  (
+                    document.activeElement.previousSibling as HTMLElement
+                  ).focus();
+                }
                 if (e.key === " " || e.key === "Enter") {
                   spotifyApi.play({ uris: [track.uri] });
                 }
@@ -216,6 +236,7 @@ const TrackSwitcher = ({
               >
                 <FavoriteButton
                   isSaved={track.isSaved}
+                  className="p-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(track.id);
@@ -401,7 +422,7 @@ export const PlayerControls = () => {
             layout="fixed"
           />
         </div>
-        <div className="flex-1 min-w-0 flex">
+        <div className="flex-1 min-w-0 flex items-center">
           <div className="mr-6">
             <div className="font-medium md:font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
               {playerState.track}
@@ -412,6 +433,7 @@ export const PlayerControls = () => {
           </div>
           <FavoriteButton
             isSaved={playerState.isSaved}
+            className="p-1"
             onClick={() => toggleFavorite(playerState.trackId)}
           />
         </div>
@@ -439,7 +461,7 @@ export const PlayerControls = () => {
           <Tooltip message="Prev">
             <button
               onClick={playPreviousTrack}
-              className="text-gray-600 hover:text-gray-800 p-2"
+              className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
             >
               <PrevIcon />
             </button>
@@ -453,7 +475,7 @@ export const PlayerControls = () => {
           <Tooltip message="Next">
             <button
               onClick={playNextTrack}
-              className="text-gray-600 hover:text-gray-800 p-2"
+              className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
             >
               <NextIcon />
             </button>
@@ -492,7 +514,7 @@ export const PlayerControls = () => {
       <div className="flex items-center justify-end h-full w-full p-10">
         <Tooltip message="Open in Spotify">
           <button
-            className="mr-4"
+            className="mr-4 focus:outline-none keyboard-focus:shadow-focus rounded"
             onClick={() =>
               window.open(
                 `https://open.spotify.com/album/${playerState.album.replace(
@@ -508,7 +530,7 @@ export const PlayerControls = () => {
         <div className="flex items-center">
           <Tooltip message={volume === 0 ? "Unmute" : "Mute"}>
             <button
-              className="mr-2"
+              className="mr-2 focus:outline-none keyboard-focus:shadow-focus rounded"
               onClick={() => {
                 let newVolume = volumeBeforeMute.current;
 

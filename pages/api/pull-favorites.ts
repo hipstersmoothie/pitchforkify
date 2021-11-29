@@ -7,7 +7,6 @@ import prisma from "../../utils/primsa";
 import { sleep } from "../../utils/sleep";
 
 export async function pullFavorites(token: string, providerAccountId: string) {
-  console.log("Pulling favorites...");
   const spotifyApi = new SpotifyWebApi({
     clientId: process.env.SPOTIFY_CLIENT_ID,
     accessToken: token,
@@ -24,8 +23,6 @@ export async function pullFavorites(token: string, providerAccountId: string) {
       lastSavedAlbum: true,
     },
   });
-
-  console.log({ lastSavedAlbum });
 
   async function getNewSavedAlbums() {
     let albums: SpotifyApi.SavedAlbumObject[] = [];

@@ -19,7 +19,7 @@ export const PlayButton = forwardRef(function PlayButton(
       aria-label={isPlaying ? "pause" : "play"}
       className={makeClass(
         className,
-        "bg-gray-800 text-white p-3 rounded-full cursor-pointer hover:scale-[1.1]"
+        "bg-gray-800 text-white p-3 rounded-full cursor-pointer hover:scale-[1.1] focus:outline-none keyboard-focus:shadow-focus-tight"
       )}
       {...props}
     >

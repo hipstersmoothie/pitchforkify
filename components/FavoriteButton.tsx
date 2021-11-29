@@ -1,3 +1,5 @@
+import makeClass from "clsx";
+
 import { HeartIcon } from "./icons/HeartIcon";
 import { UnfilledHeartIcon } from "./icons/UnfilledHeartIcon";
 import { Tooltip } from "./Tooltip";
@@ -14,6 +16,7 @@ export const FavoriteButton = ({
   style,
   size,
   fill,
+  className,
   ...props
 }: FavoriteButtonProps) => {
   return (
@@ -22,6 +25,10 @@ export const FavoriteButton = ({
     >
       <button
         style={{ ...style, fill: isSaved ? "var(--pitchfork-orange)" : fill }}
+        className={makeClass(
+          className,
+          "focus:outline-none keyboard-focus:shadow-focus-tight rounded-lg"
+        )}
         {...props}
       >
         {isSaved ? (

@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/role-supports-aria-props */
 import * as Dialog from "@radix-ui/react-dialog";
 import getYear from "date-fns/getYear";
 import format from "date-fns/format";
@@ -13,7 +14,7 @@ import { Review } from "../pages/api/reviews";
 import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayButton } from "../components/PlayButton";
 import useIntersectionObserver from "../utils/useIntersectionObserver";
-import { useRouter } from "next/dist/client/router";
+import { useRouter } from "next/router";
 import { useInfiniteQuery, useQuery } from "react-query";
 import {
   createContext,
@@ -27,6 +28,7 @@ import { Score } from "./Score";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
 import { GridFilters } from "./GridFilter";
+import { PAGE_SIZE } from "../utils/constants";
 
 const averageColor = new FastAverageColor();
 
@@ -194,7 +196,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
   );
 };
 
-const ReviewComponent = (review: Review) => {
+const ReviewComponent = (review: Review & { index: number }) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -204,17 +206,40 @@ const ReviewComponent = (review: Review) => {
         asChild
         style={{ WebkitAppearance: "none" }}
       >
-        <li
-          className="review-item mb-6 md:mb-10 flex flex-col items-center text-center cursor-pointer"
+        <article
+          className="review-item mb-6 md:mb-10 flex flex-col items-center text-center cursor-pointer focus:outline-none keyboard-focus:shadow-focus rounded"
+          aria-posinset={review.index}
           tabIndex={0}
           aria-label={`Open Review for ${review.albumTitle}`}
           onKeyDown={(e) => {
-            if (e.key === "ArrowRight" && document.activeElement.nextSibling) {
+            const trackListToggle =
+              document.querySelector<HTMLElement>("#track-list-toggle");
+            const gridFilter =
+              document.querySelector<HTMLElement>("#grid-filter");
+
+            if (
+              (e.key === "ArrowRight" || e.key === "PageDown") &&
+              document.activeElement.nextSibling
+            ) {
               e.stopPropagation();
               e.preventDefault();
               (document.activeElement.nextSibling as HTMLElement).focus();
             } else if (
-              e.key === "ArrowLeft" &&
+              (e.key === "ArrowUp" || (e.key === "Home" && e.ctrlKey)) &&
+              gridFilter
+            ) {
+              e.stopPropagation();
+              e.preventDefault();
+              gridFilter.focus();
+            } else if (
+              (e.key === "ArrowDown" || (e.key === "End" && e.ctrlKey)) &&
+              trackListToggle
+            ) {
+              e.stopPropagation();
+              e.preventDefault();
+              trackListToggle.focus();
+            } else if (
+              (e.key === "ArrowLeft" || e.key === "PageUp") &&
               document.activeElement.previousSibling
             ) {
               e.stopPropagation();
@@ -254,13 +279,13 @@ const ReviewComponent = (review: Review) => {
           <time className="text-xs text-gray-400 uppercase font-semibold">
             {format(new Date(review.publishDate), "LLLL dd yyyy")}
           </time>
-        </li>
+        </article>
       </Dialog.Trigger>
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
       <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12">
         <Tooltip message="Close Review">
           <Dialog.Close asChild>
-            <button className="fixed top-0 right-0 p-6 text-gray-400 hover:text-white">
+            <button className="fixed top-0 right-0 p-3 m-3 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">
               <CloseIcon />
             </button>
           </Dialog.Close>
@@ -379,7 +404,6 @@ export const ReviewGrid = ({
         }
       }
 
-      console.log("DEBUG", `/api/${endpoint}?${params.toString()}`);
       const res = await fetch(`/api/${endpoint}?${params.toString()}`);
       const data = await res.json();
       router.replace(
@@ -437,13 +461,22 @@ export const ReviewGrid = ({
   return (
     <FavoritesContext.Provider value={{ favorites: favorites || [] }}>
       <div className="pt-6 md:pt-10 pb-32">
-        <ul className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8">
-          {data.pages.map((page) =>
-            page.reviews.map((review) => (
-              <ReviewComponent key={review.albumTitle} {...review} />
+        <section
+          role="feed"
+          aria-busy={isFetching || isRefetching}
+          aria-setsize={-1}
+          className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 max-w-6xl mx-auto px-2 sm:px-8"
+        >
+          {data.pages.map((page, pageIndex) =>
+            page.reviews.map((review, reviewIndex) => (
+              <ReviewComponent
+                key={`review-${review.albumTitle}`}
+                index={pageIndex * PAGE_SIZE + (reviewIndex + 1)}
+                {...review}
+              />
             ))
           )}
-        </ul>
+        </section>
 
         <div
           ref={bottomRef}

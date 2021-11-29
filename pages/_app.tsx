@@ -1,6 +1,7 @@
 import { SessionProvider } from "next-auth/react";
 import { IdProvider } from "@radix-ui/react-id";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { useKeyboardNavigation } from "@design-systems/hooks";
 
 import "tailwindcss/tailwind.css";
 import "@reach/combobox/styles.css";
@@ -20,6 +21,8 @@ export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }) {
+  useKeyboardNavigation();
+
   return (
     <QueryClientProvider client={queryClient}>
       <IdProvider>

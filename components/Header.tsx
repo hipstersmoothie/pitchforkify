@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import makeClass from "clsx";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useRouter } from "next/router";
 
 import logo from "../public/pitchforkify.png";
 import { PersonIcon } from "./icons/PersonIcon";
@@ -11,11 +12,11 @@ import { useEffect, useState } from "react";
 const AccountButton = ({
   className,
   ...props
-}: React.ComponentProps<"div">) => (
-  <div
+}: React.ComponentProps<"button">) => (
+  <button
     className={makeClass(
       className,
-      "rounded px-4 h-10 cursor-pointer border border-gray-300 hover:bg-gray-100 active:bg-gray-200",
+      "rounded px-4 h-10 cursor-pointer border border-gray-300 hover:bg-gray-100 active:bg-gray-200  focus:outline-none keyboard-focus:shadow-focus",
       "flex items-center justify-center"
     )}
     {...props}
@@ -25,7 +26,7 @@ const AccountButton = ({
 export const Header = () => {
   const [top, topSet] = useState<"hidden" | "shown">("hidden");
   const { data: session } = useSession();
-  const [menuOpen, menuOpenSet] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     let lastScroll = 0;
@@ -59,7 +60,7 @@ export const Header = () => {
     >
       <div className="max-w-6xl px-3 sm:px-8 w-full mx-auto flex justify-between items-center">
         <Link passHref href="/">
-          <a className="flex items-center">
+          <a className="flex items-center focus:outline-none keyboard-focus:shadow-focus rounded-lg">
             <span className="w-10 h-10 mr-4">
               <Image src={logo} alt="pitchforkify" />
             </span>
@@ -69,8 +70,8 @@ export const Header = () => {
 
         <div className="flex gap-4">
           {session ? (
-            <DropdownMenu.Root open={menuOpen} onOpenChange={menuOpenSet}>
-              <DropdownMenu.Trigger>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger className="focus:outline-none keyboard-focus:shadow-focus rounded-full">
                 <div className="flex items-center gap-4">
                   {session.user.image ? (
                     <Image
@@ -93,26 +94,17 @@ export const Header = () => {
                 className="border border-gray-400 rounded bg-white"
                 sideOffset={10}
               >
-                <DropdownMenu.Item>
-                  <Link passHref href="/profile">
-                    <a
-                      className="px-4 py-2 block"
-                      onClick={() => menuOpenSet(false)}
-                    >
-                      Profile
-                    </a>
-                  </Link>
+                <DropdownMenu.Item
+                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded"
+                  onClick={() => router.push("/profile")}
+                >
+                  Profile
                 </DropdownMenu.Item>
-                <DropdownMenu.Item>
-                  <button
-                    className="px-4 py-2"
-                    onClick={() => {
-                      signOut();
-                      menuOpenSet(false);
-                    }}
-                  >
-                    Sign out
-                  </button>
+                <DropdownMenu.Item
+                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded"
+                  onClick={() => signOut()}
+                >
+                  Sign out
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>

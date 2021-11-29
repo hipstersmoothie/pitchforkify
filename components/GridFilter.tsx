@@ -71,7 +71,7 @@ const RangeInput = ({
 };
 
 const SliderThumb = ({ value }: { value: number }) => (
-  <Slider.Thumb className="group relative block transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow focus:outline-none focus:border-2 focus:border-[#ff3530]">
+  <Slider.Thumb className="group relative block transition-opacity h-4 w-4 bg-white rounded-full border border-gray-300 shadow focus:outline-none keyboard-focus:shadow-focus">
     <div
       className="opacity-0 group-hover:opacity-100 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full bg-white rounded border border-gray-300 px-2 py-1"
       style={{
@@ -95,7 +95,7 @@ const Checkbox = ({ onCheckedChange, value, checked }: CheckboxProps) => {
       <CheckboxPrimitive.Root
         id={value}
         checked={checked}
-        className="w-6 h-6 border rounded flex items-center justify-center"
+        className="w-6 h-6 border rounded flex items-center justify-center focus:outline-none keyboard-focus:shadow-focus"
         onCheckedChange={onCheckedChange}
       >
         <CheckboxPrimitive.Indicator>
@@ -123,8 +123,8 @@ const Switch = ({ checked, id, onCheckedChange, children }: SwitchProps) => {
       <SwitchPrimitive.Root
         id={id}
         className={makeClass(
-          "w-11 h-7 rounded-full relative shadow",
-          checked ? "bg-[#ff3530]" : "bg-gray-200"
+          "w-11 h-7 rounded-full relative shadow focus:outline-none keyboard-focus:shadow-focus",
+          checked ? "bg-pitchfork" : "bg-gray-200"
         )}
         checked={checked}
         onCheckedChange={onCheckedChange}
@@ -207,8 +207,6 @@ const Search = ({ addSearchFilter }: SearchProps) => {
     mutateAsync(query);
   }, 500);
 
-  console.log(results.length);
-
   return (
     <Combobox
       aria-label="Search"
@@ -227,7 +225,7 @@ const Search = ({ addSearchFilter }: SearchProps) => {
             debouncedSearch(e.target.value);
           }}
         />
-        <span className="border-[#ff3530] border-b-[3px] absolute bottom-0 translate-y-[2px] left-0 text-transparent rounded h-0">
+        <span className="border-pitchfork border-b-[3px] absolute bottom-0 translate-y-[2px] left-0 text-transparent rounded h-0">
           {search}
         </span>
       </div>
@@ -388,7 +386,7 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
         open={open}
         onOpenChange={openSet}
       >
-        <Collapsible.Trigger className="px-4 py-3 w-full flex justify-between items-center min-h-[60px]">
+        <Collapsible.Trigger id="grid-filter" className="px-4 py-3 w-full flex justify-between items-center min-h-[60px] focus:outline-none keyboard-focus:shadow-focus rounded">
           {hasActiveFilters(filters) ? (
             <div className="flex gap-2 items-center">
               <div className="font-medium text-sm uppercase pr-2">Active Filters:</div>
