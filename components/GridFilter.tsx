@@ -14,6 +14,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { MixerVerticalIcon, CheckIcon } from "@radix-ui/react-icons";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
+import { useRouter } from "next/router";
 
 import { CloseIcon } from "./icons/CloseIcon";
 
@@ -292,11 +293,102 @@ export interface GridFilters {
 }
 
 export function useGridFilters() {
-  return useState<GridFilters>({
+  const router = useRouter();
+  const [filters, setFilters] = useState<GridFilters>({
     isBestNew: false,
     genre: [],
     search: [],
   });
+
+  useEffect(() => {
+    const query = new URLSearchParams(document.location.search);
+
+    setFilters({
+      isBestNew: query.get("isBestNew") === "1",
+      search: [],
+      genre: query.get("genre")
+        ? decodeURIComponent(query.get("genre")).split(",")
+        : [],
+      yearRange:
+        query.get("yearStart") || query.get("yearEnd")
+          ? {
+              start: query.get("yearStart")
+                ? Number(query.get("yearStart"))
+                : FIRST_YEAR,
+              end: query.get("yearEnd")
+                ? Number(query.get("yearEnd"))
+                : CURRENT_YEAR,
+            }
+          : undefined,
+      score:
+        query.get("scoreStart") || query.get("scoreEnd")
+          ? {
+              start: query.get("scoreStart")
+                ? Number(query.get("scoreStart"))
+                : FIRST_YEAR,
+              end: query.get("scoreEnd")
+                ? Number(query.get("scoreEnd"))
+                : CURRENT_YEAR,
+            }
+          : undefined,
+    });
+  }, []);
+
+  useEffect(() => {
+    const start = new URLSearchParams(document.location.search);
+    const query = new URLSearchParams(document.location.search);
+
+    if (filters.isBestNew) {
+      query.set("isBestNew", "1");
+    } else {
+      query.delete("isBestNew");
+    }
+
+    if (filters.genre?.length) {
+      query.set("genre", encodeURIComponent(filters.genre.join(",")));
+    } else {
+      query.delete("genre");
+    }
+
+    if (filters.yearRange?.start) {
+      query.set("yearStart", String(filters.yearRange.start));
+    } else {
+      query.delete("yearStart");
+    }
+
+    if (filters.yearRange?.end) {
+      query.set("yearEnd", String(filters.yearRange.end));
+    } else {
+      query.delete("yearEnd");
+    }
+
+    if (filters.score?.start) {
+      query.set("scoreStart", String(filters.score.start));
+    } else {
+      query.delete("scoreStart");
+    }
+
+    if (filters.score?.end) {
+      query.set("scoreEnd", String(filters.score.end));
+    } else {
+      query.delete("scoreEnd");
+    }
+
+    if (start.toString() !== query.toString()) {
+      router.replace(
+        `${document.location.pathname}?${query.toString()}`,
+        undefined,
+        {
+          shallow: true,
+          scroll: false,
+        }
+      );
+    } else {
+      query.delete("isBestNew");
+    }
+  }, [filters, router]);
+
+  return [filters, setFilters];
 }
 
 export function hasActiveFilters(filters: GridFilters) {
@@ -386,10 +478,15 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
         open={open}
         onOpenChange={openSet}
       >
-        <Collapsible.Trigger id="grid-filter" className="px-4 py-3 w-full flex justify-between items-center min-h-[60px] focus:outline-none keyboard-focus:shadow-focus rounded">
+        <Collapsible.Trigger
+          id="grid-filter"
+          className="px-4 py-3 w-full flex justify-between items-center min-h-[60px] focus:outline-none keyboard-focus:shadow-focus rounded"
+        >
           {hasActiveFilters(filters) ? (
             <div className="flex gap-2 items-center">
-              <div className="font-medium text-sm uppercase pr-2">Active Filters:</div>
+              <div className="font-medium text-sm uppercase pr-2">
+                Active Filters:
+              </div>
 
               {filters.search.map((match) => (
                 <FilterPill
@@ -454,7 +551,9 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
               )}
             </div>
           ) : (
-            <div className="font-medium uppercase text-sm pr-2">Latest Releases</div>
+            <div className="font-medium uppercase text-sm pr-2">
+              Latest Releases
+            </div>
           )}
 
           <div className="text-gray-800 flex items-center justify-center">

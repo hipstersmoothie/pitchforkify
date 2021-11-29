@@ -406,10 +406,12 @@ export const ReviewGrid = ({
 
       const res = await fetch(`/api/${endpoint}?${params.toString()}`);
       const data = await res.json();
+      const query = new URLSearchParams(document.location.search);
+      query.set("page", String(pageParam.page));
       router.replace(
-        `/${endpoint === "favorite-reviews" ? "profile" : ""}?page=${
-          pageParam.page
-        }`,
+        `/${
+          endpoint === "favorite-reviews" ? "profile" : ""
+        }?${query.toString()}`,
         undefined,
         {
           shallow: true,
