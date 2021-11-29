@@ -6,7 +6,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pull-data": "node -r esbuild-register ./scripts/pull-data.ts"
+    "pull-data": "node -r esbuild-register ./scripts/pull-data.ts",
+    "postinstall": "npx prisma generate && yarn pull-data"
   },
   "dependencies": {
     "@prisma/client": "^3.5.0",
