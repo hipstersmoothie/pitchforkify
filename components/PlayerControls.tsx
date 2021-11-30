@@ -437,7 +437,7 @@ export const PlayerControls = () => {
         open={open}
         setOpen={setOpen}
       />
-      <div className={"mx-2 flex items-center border-box my-1 md:mb-0"}>
+      <div className={"mx-2 flex items-center border-box my-1 md:my-0"}>
         <div
           className={makeClass(
             "h-12 w-12 border mr-3 md:mr-4 border-gray-300 rounded overflow-hidden",
