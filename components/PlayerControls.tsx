@@ -201,7 +201,7 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
 
   return (
     <Collapsible.Root
-      className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full flex flex-col items-center z-1 w-screen sm:w-full"
+      className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full flex flex-col items-center z-1 w-screen sm:w-full sm:max-w-3xl"
       open={open}
       onOpenChange={setOpen}
     >
