@@ -316,7 +316,7 @@ export const PlayerControls = () => {
   const timeUpdateIntervale = useRef<ReturnType<typeof setInterval>>();
   const spotifyApi = useSpotifyApi();
   const playAlbum = usePlayAlbum();
-  const { reviews } = useContext(ReviewsContext);
+  const { reviews, randomReview } = useContext(ReviewsContext);
   const { player } = useContext(PlayerContext);
   const debouncedSeek = useDebouncedCallback((v) => player?.seek(v), 200);
   const [currentTime, setCurrentTime] = useState(0);
@@ -441,7 +441,10 @@ export const PlayerControls = () => {
       />
       <div className={"mx-2 flex items-center border-box my-1 md:my-0"}>
         <ReviewContentModal
-          review={reviews.find((r) => r.spotifyAlbum === playerState.album)}
+          review={
+            reviews.find((r) => r.spotifyAlbum === playerState.album) ||
+            randomReview
+          }
         >
           <div
             className={makeClass(

@@ -3,11 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 import makeClass from "clsx";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {SymbolIcon} from "@radix-ui/react-icons";
 import { useRouter } from "next/router";
 
 import logo from "../public/pitchforkify.png";
 import { PersonIcon } from "./icons/PersonIcon";
-import { useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { Tooltip } from "./Tooltip";
+import { usePlayAlbum } from "../utils/useSpotifyApi";
+import { Review } from "../pages/api/reviews";
+import { ReviewsContext } from "../utils/context";
 
 const AccountButton = ({
   className,
@@ -26,7 +31,9 @@ const AccountButton = ({
 export const Header = () => {
   const [top, topSet] = useState<"hidden" | "shown">("hidden");
   const { data: session } = useSession();
+  const { setRandomReview } = useContext(ReviewsContext);
   const router = useRouter();
+  const playAlbum = usePlayAlbum();
 
   useEffect(() => {
     let lastScroll = 0;
@@ -50,6 +57,17 @@ export const Header = () => {
     };
   }, []);
 
+  const [isFetchingRandom, isFetchingRandomSet] = useState(false);
+  const getRandomAlbum = useCallback(async () => {
+    isFetchingRandomSet(true);
+    const res = await fetch("/api/random-album");
+    const review = (await res.json()) as Review;
+
+    await playAlbum(review);
+    setRandomReview(review);
+    isFetchingRandomSet(false);
+  }, [playAlbum, setRandomReview]);
+
   return (
     <nav
       className={makeClass(
@@ -69,6 +87,15 @@ export const Header = () => {
         </Link>
 
         <div className="flex gap-4">
+          <Tooltip message="Random Album" side="bottom">
+            <button
+              className="px-2 py-1 hover:bg-gray-100 rounded-lg"
+              onClick={getRandomAlbum}
+            >
+              <SymbolIcon className={isFetchingRandom ? "animate-spin" : ""} />
+            </button>
+          </Tooltip>
+
           {session ? (
             <DropdownMenu.Root>
               <DropdownMenu.Trigger className="focus:outline-none keyboard-focus:shadow-focus rounded-full">

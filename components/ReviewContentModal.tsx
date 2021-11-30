@@ -14,7 +14,7 @@ import { ArtistList } from "./ArtistList";
 import { LabelList } from "./LabelList";
 
 interface ReviewContentModalProps {
-  review: Review;
+  review?: Review;
   children: React.ReactNode;
 }
 
@@ -24,6 +24,10 @@ export const ReviewContentModal = ({
 }: ReviewContentModalProps) => {
   const isKeyboardNav = useKeyboardNavigation();
   const [open, setOpen] = useState(false);
+
+  if (!review) {
+    return <>{children}</>;
+  }
 
   return (
     <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>

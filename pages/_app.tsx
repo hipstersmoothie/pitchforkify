@@ -15,6 +15,7 @@ import {
 import { PlayerProvider } from "../utils/PlayerContext";
 import { ReviewsContext } from "../utils/context";
 import { useState } from "react";
+import { Review } from "./api/reviews";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ export default function App({
   Component,
   pageProps: { session, ...pageProps },
 }) {
+  const [randomReview, setRandomReview] = useState<Review>();
   const [allReviews, setAllReviews] = useState(pageProps.reviews);
 
   useKeyboardNavigation();
@@ -31,7 +33,12 @@ export default function App({
       <IdProvider>
         <SessionProvider session={session}>
           <ReviewsContext.Provider
-            value={{ reviews: allReviews, setAllReviews }}
+            value={{
+              reviews: allReviews,
+              setAllReviews,
+              randomReview,
+              setRandomReview,
+            }}
           >
             {pageProps.layout === "app" ? (
               <PlayerProvider>
