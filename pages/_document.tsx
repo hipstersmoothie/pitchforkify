@@ -16,7 +16,14 @@ class MyDocument extends Document {
   render() {
     return (
       <Html>
-        <Head />
+        <Head>
+          <link
+            rel="preload"
+            href="/tiempos-regular.otf"
+            as="font"
+            crossOrigin=""
+          />
+        </Head>
         <body>
           <Main />
           <NextScript />

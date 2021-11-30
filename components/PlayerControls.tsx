@@ -180,7 +180,8 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
   useEffect(() => {
     async function fetchTracks() {
       const tracksData = await spotifyApi.getAlbumTracks(
-        playerState.album.replace("spotify:album:", "")
+        playerState.album.replace("spotify:album:", ""),
+        { limit: 50 }
       );
       const { body: savedData } = await spotifyApi.containsMySavedTracks(
         tracksData.body.items.map((i) => i.id)

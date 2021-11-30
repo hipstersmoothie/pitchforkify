@@ -6,6 +6,7 @@ import Image from "next/image";
 import makeClass from "clsx";
 import FastAverageColor from "fast-average-color";
 import contrast from "contrast";
+import { useKeyboardNavigation } from "@design-systems/hooks";
 
 import { CloseIcon } from "./icons/CloseIcon";
 import { LoadingLogoIcon } from "./icons/LoadingLogo";
@@ -198,6 +199,7 @@ const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
 };
 
 const ReviewComponent = (review: Review & { index: number }) => {
+  const isKeyboardNav = useKeyboardNavigation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -283,7 +285,14 @@ const ReviewComponent = (review: Review & { index: number }) => {
         </article>
       </Dialog.Trigger>
       <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
-      <Dialog.Content className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12">
+      <Dialog.Content
+        className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12"
+        onOpenAutoFocus={(e) => {
+          if (!isKeyboardNav) {
+            e.preventDefault();
+          }
+        }}
+      >
         <Tooltip message="Close Review">
           <Dialog.Close asChild>
             <button className="fixed top-0 right-0 p-3 m-3 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">

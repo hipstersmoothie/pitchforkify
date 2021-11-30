@@ -95,13 +95,13 @@ export const Header = () => {
                 sideOffset={10}
               >
                 <DropdownMenu.Item
-                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded"
+                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer"
                   onClick={() => router.push("/profile")}
                 >
                   Profile
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
-                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded"
+                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer"
                   onClick={() => signOut()}
                 >
                   Sign out

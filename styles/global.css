@@ -2,6 +2,14 @@
   --pitchfork-orange: #ff3530;
 }
 
+@font-face {
+  font-family: "Tiempos";
+  src: url("/tiempos-regular.otf");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 .sr-only,
 .end-mark,
 .review-detail__featured-tracks {
@@ -22,7 +30,7 @@ body {
 }
 
 .contents p {
-  @apply md:text-lg my-8;
+  @apply leading-8 md:leading-8 md:text-lg my-8;
 }
 
 .contents hr {
@@ -31,7 +39,14 @@ body {
 
 .contents {
   @apply leading-8 max-w-[70ch];
-  font-family: Tiempos, Georgia, serif;
+  font-family: Tiempos, monospace, Georgia, serif;
+}
+
+.contents > p:first-child:first-letter {
+  float: left;
+  font-size: 6.2em;
+  line-height: 1em;
+  margin: -0.0em 0.15em -.13em 0;
 }
 
 .contents a {

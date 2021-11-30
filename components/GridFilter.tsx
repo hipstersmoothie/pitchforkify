@@ -388,7 +388,7 @@ export function useGridFilters() {
     }
   }, [filters, router]);
 
-  return [filters, setFilters];
+  return [filters, setFilters] as const;
 }
 
 export function hasActiveFilters(filters: GridFilters) {
