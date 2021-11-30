@@ -251,7 +251,7 @@ export const ReviewGrid = ({
           {data.pages.map((page, pageIndex) =>
             page.reviews.map((review, reviewIndex) => (
               <ReviewComponent
-                key={`review-${review.albumTitle}`}
+                key={`review-${review.albumTitle}-${pageIndex}-${reviewIndex}`}
                 index={pageIndex * PAGE_SIZE + (reviewIndex + 1)}
                 {...review}
               />
