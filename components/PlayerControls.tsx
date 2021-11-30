@@ -166,11 +166,11 @@ interface TrackSwitcherProps {
   setOpen: (open: boolean) => void;
 }
 
-const TrackSwitcher = ({
+const TrackSwitcher = React.memo(function TrackSwitcher({
   toggleFavorite,
   open,
   setOpen,
-}: TrackSwitcherProps) => {
+}: TrackSwitcherProps) {
   const spotifyApi = useSpotifyApi();
   const { playerState } = useContext(PlayerStateContext);
   const [tracks, tracksSet] = useState<
@@ -182,7 +182,7 @@ const TrackSwitcher = ({
       const tracksData = await spotifyApi.getAlbumTracks(
         playerState.album.replace("spotify:album:", "")
       );
-      const savedData = await spotifyApi.containsMySavedTracks(
+      const { body: savedData } = await spotifyApi.containsMySavedTracks(
         tracksData.body.items.map((i) => i.id)
       );
 
@@ -307,7 +307,7 @@ const TrackSwitcher = ({
       </Collapsible.Content>
     </Collapsible.Root>
   );
-};
+});
 
 export const PlayerControls = () => {
   const volumeBeforeMute = useRef<number>(1);
