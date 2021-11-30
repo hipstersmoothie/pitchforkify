@@ -42,7 +42,6 @@ export const usePlayAlbum = () => {
       spotifyApi
         .play({
           context_uri: review.spotifyAlbum,
-          offset: { position: 0 },
           device_id,
         })
         .then(() => {

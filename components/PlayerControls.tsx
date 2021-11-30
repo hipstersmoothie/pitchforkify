@@ -109,12 +109,11 @@ export const PlayerStateContextProvider = ({
         newState.paused &&
         newState.track_window.next_tracks.length === 0
       ) {
-        const nextAlbum = getAlbumFromOffset(reviews, newState.context.uri, 1);
+        const nextAlbum = getAlbumFromOffset(reviews, playerState.album, 1);
 
         if (nextAlbum) {
           if (!tryingToPlayNextAlbum.current) {
             tryingToPlayNextAlbum.current = true;
-            console.log(nextAlbum)
             playAlbum(nextAlbum);
           }
 
@@ -152,7 +151,7 @@ export const PlayerStateContextProvider = ({
 
       player.removeListener("player_state_changed", playerStateChanged);
     };
-  }, [playAlbum, player, reviews, spotifyApi]);
+  }, [playAlbum, player, playerState.album, reviews, spotifyApi]);
 
   return (
     <PlayerStateContext.Provider value={{ playerState, setPlayerState }}>
@@ -228,15 +227,12 @@ const TrackSwitcher = ({
               className="rows group flex item-center hover:bg-gray-200 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
               aria-label={`Play ${track.name}`}
               tabIndex={0}
-              onClick={() => {
+              onClick={async () => {
                 if (playerState.playing && playerState.trackId === track.id) {
                   spotifyApi.pause();
                 } else {
-                  spotifyApi.play({
-                    context_uri: playerState.album,
-                    offset: {
-                      uri: track.uri,
-                    },
+                  await spotifyApi.play({
+                    uris: tracks.slice(index).map((t) => t.uri),
                   });
                 }
               }}
@@ -336,6 +332,7 @@ export const PlayerControls = () => {
     }
 
     document.addEventListener("keydown", pressSpace);
+    setCurrentTime(0);
 
     return () => {
       document.removeEventListener("keydown", pressSpace);

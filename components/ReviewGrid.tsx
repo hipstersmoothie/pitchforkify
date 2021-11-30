@@ -29,6 +29,7 @@ import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
 import { GridFilters } from "./GridFilter";
 import { PAGE_SIZE } from "../utils/constants";
+import { ReviewsContext } from "../utils/context";
 
 const averageColor = new FastAverageColor();
 
@@ -339,6 +340,7 @@ export const ReviewGrid = ({
 }: ReviewGridProps) => {
   const firstRender = useRef(true);
   const bottomRef = useRef<HTMLDivElement>();
+  const { setAllReviews } = useContext(ReviewsContext);
   const router = useRouter();
 
   const { data: favorites } = useQuery("/api/favorites", async () => {
@@ -459,6 +461,11 @@ export const ReviewGrid = ({
     remove();
     refetch();
   }, [filters, refetch, remove]);
+
+  useEffect(() => {
+    const allReviews = data.pages.map((p) => p.reviews).flat();
+    setAllReviews(allReviews);
+  }, [data, setAllReviews]);
 
   return (
     <FavoritesContext.Provider value={{ favorites: favorites || [] }}>
