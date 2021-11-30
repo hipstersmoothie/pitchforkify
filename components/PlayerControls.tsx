@@ -224,7 +224,7 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
           {tracks.map((track, index) => (
             <div
               key={track.id}
-              className="rows group flex item-center hover:bg-gray-200 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
+              className="rows group flex items-center hover:bg-gray-200 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={async () => {
