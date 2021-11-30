@@ -114,6 +114,7 @@ export const PlayerStateContextProvider = ({
         if (nextAlbum) {
           if (!tryingToPlayNextAlbum.current) {
             tryingToPlayNextAlbum.current = true;
+            console.log(nextAlbum)
             playAlbum(nextAlbum);
           }
 
