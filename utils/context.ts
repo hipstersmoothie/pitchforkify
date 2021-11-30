@@ -8,3 +8,7 @@ export const ReviewsContext = createContext<{
   reviews: [],
   setAllReviews: () => undefined,
 });
+
+export const FavoritesContext = createContext<{ favorites: string[] }>({
+  favorites: [],
+});
