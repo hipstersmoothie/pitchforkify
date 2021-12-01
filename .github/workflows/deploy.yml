@@ -2,7 +2,7 @@ name: Deploy Website
 
 on:
   schedule:
-    - cron:  '16 21 * * *'
+    - cron:  '16 3 * * *'
 
 jobs:
   deploy:

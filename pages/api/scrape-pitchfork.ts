@@ -151,12 +151,11 @@ export async function scrapeReviews(page: number) {
   }));
 
   for (const data of reviewCreations) {
-    const review = await prisma.review.findUnique({
+    const review = await prisma.review.findFirst({
       where: {
-        albumTitle_publishDate: {
-          albumTitle: data.albumTitle,
-          publishDate: data.publishDate,
-        },
+        albumTitle: data.albumTitle,
+        author: data.author,
+        score: data.score,
       },
       select: {
         id: true,
