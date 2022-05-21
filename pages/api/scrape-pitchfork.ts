@@ -6,6 +6,7 @@ import SpotifyWebApi from "spotify-web-api-node";
 import prisma from "../../utils/primsa";
 import { sleep } from "../../utils/sleep";
 import { Prisma } from "@prisma/client";
+import { PitchforkReview } from "./Pitchfork";
 
 const rootUrl = "https://pitchfork.com";
 
@@ -82,58 +83,71 @@ interface ParsedReview {
 
 async function parseReview(
   $reviewPage: CheerioAPI,
-  reviewEl: Element
+  review: PitchforkReview
 ): Promise<ParsedReview> {
-  const $reviewPageEl = await getPage(
-    `${rootUrl}${$reviewPage(".review__link", reviewEl).attr("href")}`
-  );
-  const reviewHtml = $reviewPageEl(".review-detail__article-content")
-    .first()
-    .html();
+  const $reviewPageEl = await getPage(`${rootUrl}${review.url}`);
+
+  let reviewHtml =
+    $reviewPageEl('[data-testid="BodyWrapper"]').first().html() ||
+    $reviewPageEl(".review-detail__article-content").first().html();
 
   if (!reviewHtml) {
     console.log("Throttled by Pitchfork. Waiting...");
     await sleep(30 * 1000);
-    return parseReview($reviewPage, reviewEl);
+    return parseReview($reviewPage, review);
   }
 
-  const albumTitle = $reviewPage(".review__title-album", reviewEl).text();
-  const artists = $reviewPage(".review__title-artist li", reviewEl)
-    .toArray()
-    .map((artist) => ({ name: $reviewPage(artist).text() }));
-  const albums = await searchAlbums(artists[0].name, albumTitle);
+  if ($reviewPageEl('[data-testid="BodyWrapper"]').length) {
+    reviewHtml = `
+      <div class="review-detail__abstract">${$reviewPageEl(
+        "[class*=SplitScreenContentHeaderDekDown]"
+      ).text()}</div>
+      <div class="contents dropcap">${reviewHtml}</div>
+    `;
+  }
+
+  const albumTitle = review.seoTitle;
+  const artists = review.artists.map((artist) => ({
+    name: artist.display_name,
+  }));
+  const albums = await searchAlbums(artists[0]?.name, albumTitle);
 
   return {
-    albumTitle: $reviewPage(".review__title-album", reviewEl).text(),
-    cover: $reviewPage(".review__artwork img", reviewEl).attr("src"),
+    albumTitle,
+    cover: review.tombstone.albums[0].album.photos.tout.sizes.standard,
     spotifyAlbum: albums[0]?.uri || null,
-    score: Number($reviewPageEl(".score").first().text()),
-    author: $reviewPage(".display-name--linked", reviewEl)
-      .text()
-      .replace("by: ", ""),
-    publishDate: new Date($reviewPage(".pub-date", reviewEl).attr("datetime")),
-    isBestNew: $reviewPage(".review__artwork--with-notch", reviewEl).length > 0,
-    labels: $reviewPageEl(".labels-list__item")
-      .first()
-      .toArray()
-      .map((label) => ({ name: $reviewPage(label).text() })),
+    score: Number(review.tombstone.albums[0].rating.rating),
+    author: review.authors[0].name.trim(),
+    publishDate: new Date(review.pubDate),
+    isBestNew: review.tombstone.albums[0].rating.bnm,
+    labels: review.tombstone.albums[0].labels_and_years[0].labels.map(
+      (label) => ({ name: label.display_name })
+    ),
     artists,
-    genres: $reviewPage(".genre-list__item", reviewEl)
-      .first()
-      .toArray()
-      .map((genre) => ({ name: $reviewPage(genre).text() })),
+    genres: review.genres.map((genre) => ({ name: genre.display_name })),
     reviewHtml,
   };
 }
 
 export async function scrapeReviews(page: number) {
-  console.log({ page });
   await setupSpotifyApi();
 
   const $ = await getPage(getReviewPageUrl(page));
-  const reviewsHtml = $(".review");
+  const [, appString] = $.html()
+    .toString()
+    .match(/<script>window\.App=(.*?);<\/script>/);
+
+  const app = JSON.parse(appString);
+
+  const order = app.context.dispatcher.stores.ReviewsStore.itemPages;
+  const reviewsData = (
+    Object.values(
+      app.context.dispatcher.stores.ReviewsStore.items
+    ) as PitchforkReview[]
+  ).sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+
   const reviews = await Promise.all(
-    reviewsHtml.toArray().map((review) => parseReview($, review))
+    reviewsData.map((review) => parseReview($, review))
   );
 
   // : Prisma.ReviewCreateArgs["data"]

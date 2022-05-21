@@ -88,7 +88,9 @@ export const ReviewContentModal = ({
         </Dialog.Title>
         <Dialog.Description
           className="mx-auto w-[fit-content] px-3"
-          dangerouslySetInnerHTML={{ __html: review.reviewHtml }}
+          dangerouslySetInnerHTML={{
+            __html: `<div className="body__inner-container">${review.reviewHtml}</div>`,
+          }}
         />
       </Dialog.Content>
     </Dialog.Root>

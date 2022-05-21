@@ -38,15 +38,22 @@ body {
 }
 
 .contents {
-  @apply leading-8 max-w-[70ch];
+  @apply leading-8;
   font-family: Tiempos, monospace, Georgia, serif;
 }
 
+.body__inner-container,
+.contents {
+  @apply max-w-[70ch];
+  display: block;
+}
+
+.body__inner-container > p:first-child:first-letter,
 .contents > p:first-child:first-letter {
   float: left;
   font-size: 6.2em;
   line-height: 1em;
-  margin: -0.0em 0.15em -.13em 0;
+  margin: -0em 0.15em -0.13em 0;
 }
 
 .contents a {
