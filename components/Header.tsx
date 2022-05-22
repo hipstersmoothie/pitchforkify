@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import makeClass from "clsx";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import {SymbolIcon} from "@radix-ui/react-icons";
+import { SymbolIcon } from "@radix-ui/react-icons";
 import { useRouter } from "next/router";
 
 import logo from "../public/pitchforkify.png";

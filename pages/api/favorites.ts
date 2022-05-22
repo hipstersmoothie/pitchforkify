@@ -24,6 +24,10 @@ export default async function favorites(
   const session = await getSession({ req });
 
   if (req.method === "GET") {
+    if (!session) {
+      return res.status(200).json([]);
+    }
+
     const uris = await getAllFavoritesUrisForSession(session);
 
     return res.status(200).json(uris);

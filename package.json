@@ -31,8 +31,8 @@
     "date-fns": "^2.25.0",
     "fast-average-color": "^7.0.1",
     "isomorphic-fetch": "^3.0.0",
-    "next": "12.0.4",
-    "next-auth": "4.0.0-beta.7",
+    "next": "12.1.6",
+    "next-auth": "4.3.4",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-query": "^3.33.1",
@@ -41,7 +41,7 @@
     "use-debounce": "^7.0.1"
   },
   "devDependencies": {
-    "@next-auth/prisma-adapter": "^0.5.2-next.19",
+    "@next-auth/prisma-adapter": "^1.0.3",
     "@types/isomorphic-fetch": "^0.0.35",
     "@types/react": "^17.0.35",
     "@types/spotify-web-api-node": "^5.0.4",
@@ -52,7 +52,7 @@
     "esbuild": "^0.13.14",
     "esbuild-register": "^3.1.2",
     "eslint": "7",
-    "eslint-config-next": "12.0.4",
+    "eslint-config-next": "12.1.6",
     "postcss": "^8.3.11",
     "tailwindcss": "^2.2.19",
     "typescript": "^4.5.0"
