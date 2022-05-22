@@ -101,13 +101,13 @@ export const Header = () => {
               <DropdownMenu.Trigger className="focus:outline-none keyboard-focus:shadow-focus rounded-full">
                 <div className="flex items-center gap-4">
                   {session.user.image ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={session.user.image}
                       alt=""
                       height={40}
                       width={40}
                       className="rounded-full"
-                      layout="fixed"
                     />
                   ) : (
                     <div className="rounded-full w-10 h-10 bg-gray-400 border flex items-center justify-center text-gray-100">
