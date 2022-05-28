@@ -12,6 +12,10 @@ export const ReviewsContext = createContext<{
   setAllReviews: () => undefined,
 });
 
-export const FavoritesContext = createContext<{ favorites: string[] }>({
+export const AlbumUserMetadataContext = createContext<{
+  favorites: string[];
+  played: string[];
+}>({
   favorites: [],
+  played: [],
 });

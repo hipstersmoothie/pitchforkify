@@ -13,7 +13,7 @@ import useIntersectionObserver from "../utils/useIntersectionObserver";
 import { Score } from "./Score";
 import { GridFilters } from "./GridFilter";
 import { PAGE_SIZE } from "../utils/constants";
-import { FavoritesContext, ReviewsContext } from "../utils/context";
+import { AlbumUserMetadataContext, ReviewsContext } from "../utils/context";
 import { AlbumCover } from "./AlbumCover";
 import { ArtistList } from "./ArtistList";
 import { LabelList } from "./LabelList";
@@ -116,6 +116,11 @@ export const ReviewGrid = ({
 
   const { data: favorites } = useQuery("/api/favorites", async () => {
     const req = await fetch("/api/favorites");
+    return req.json() as Promise<string[]>;
+  });
+
+  const { data: played } = useQuery("/api/played", async () => {
+    const req = await fetch("/api/played");
     return req.json() as Promise<string[]>;
   });
 
@@ -239,7 +244,9 @@ export const ReviewGrid = ({
   }, [data, setAllReviews]);
 
   return (
-    <FavoritesContext.Provider value={{ favorites: favorites || [] }}>
+    <AlbumUserMetadataContext.Provider
+      value={{ favorites: favorites || [], played: played || [] }}
+    >
       <div className="pt-6 md:pt-10 pb-32">
         <section
           role="feed"
@@ -267,6 +274,6 @@ export const ReviewGrid = ({
           </span>
         </div>
       </div>
-    </FavoritesContext.Provider>
+    </AlbumUserMetadataContext.Provider>
   );
 };

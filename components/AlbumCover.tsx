@@ -9,8 +9,8 @@ import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayButton } from "../components/PlayButton";
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "./FavoriteButton";
-import { FavoritesContext } from "../utils/context";
-import { CheckIcon, SymbolIcon } from "@radix-ui/react-icons";
+import { AlbumUserMetadataContext } from "../utils/context";
+import { CheckIcon } from "@radix-ui/react-icons";
 
 const averageColor = new FastAverageColor();
 
@@ -26,14 +26,23 @@ export const AlbumCover = ({
   const wrapperRef = useRef<HTMLDivElement>();
   const playAlbum = usePlayAlbum();
   const spotifyApi = useSpotifyApi();
-  const { favorites } = useContext(FavoritesContext);
+  const { favorites, played } = useContext(AlbumUserMetadataContext);
   const isSavedOnDb = favorites.includes(review.spotifyAlbum);
+  const [hasBeenPlayed, hasBeenPlayedSet] = useState(
+    played.includes(review.spotifyAlbum)
+  );
   const [isSaved, setIsSaved] = useState(isSavedOnDb);
   const [isDarkImage, isDarkImageSet] = useState(false);
 
   useEffect(() => {
     setIsSaved(isSavedOnDb);
   }, [isSavedOnDb]);
+
+  useEffect(() => {
+    if (played.includes(review.spotifyAlbum)) {
+      hasBeenPlayedSet(true);
+    }
+  }, [played, review.spotifyAlbum]);
 
   useEffect(() => {
     const img = wrapperRef.current.querySelector("img");
@@ -123,9 +132,17 @@ export const AlbumCover = ({
           isPlaying={false}
           className="absolute top-1/2 -translate-x-1/2 left-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
           aria-label={`Play ${review.albumTitle}`}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
             playAlbum(review);
+            hasBeenPlayedSet(true);
+
+            if (!hasBeenPlayed) {
+              fetch("/api/played", {
+                method: "PUT",
+                body: JSON.stringify({ uri: review.spotifyAlbum }),
+              });
+            }
           }}
           onKeyDown={(e) => {
             if (e.key === " " || e.key === "Enter") {
@@ -137,9 +154,14 @@ export const AlbumCover = ({
         />
       )}
 
-      {review.wasPlayed && (
-        <div className="absolute inset-0 bg-opacity-30 bg-gray-200 pointer-events-none text-white group">
-          <div className=" group-hover:opacity-1 text-white bg-white p-1 m-1.5 text-lg absolute bottom-0 left-0">
+      {hasBeenPlayed && (
+        <div
+          className={makeClass(
+            "absolute inset-0 pointer-events-none text-white",
+            !isSaved && "bg-opacity-40 bg-gray-200"
+          )}
+        >
+          <div className="text-white bg-white p-1 m-1.5 text-lg absolute bottom-0 left-0">
             <div className="p-2 bg-pitchfork flex items-center justify-center">
               <CheckIcon className="h-4 w-4 " />
             </div>
