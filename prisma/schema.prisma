@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Account {
-  id                 String       @id @default(cuid())
+  id                 String        @id @default(cuid())
   userId             String
   type               String
   provider           String
@@ -29,7 +29,8 @@ model Account {
   oauth_token_secret String?
   oauth_token        String?
   lastSavedAlbum     String?
-  savedAlbums        SavedAlbum[] @relation(references: [uri])
+  savedAlbums        SavedAlbum[]  @relation(references: [uri])
+  playedAlbums       PlayedAlbum[] @relation(references: [uri])
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -37,7 +38,12 @@ model Account {
 }
 
 model SavedAlbum {
-  uri     String    @id @unique
+  uri      String    @id @unique
+  accounts Account[] @relation(references: [id])
+}
+
+model PlayedAlbum {
+  uri      String    @id @unique
   accounts Account[] @relation(references: [id])
 }
 
