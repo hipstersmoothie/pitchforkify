@@ -7,15 +7,10 @@ import { Review } from "../pages/api/reviews";
 
 import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayButton } from "../components/PlayButton";
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "./FavoriteButton";
 import { FavoritesContext } from "../utils/context";
+import { CheckIcon, SymbolIcon } from "@radix-ui/react-icons";
 
 const averageColor = new FastAverageColor();
 
@@ -23,7 +18,11 @@ interface AlbumCoverProps extends React.ComponentProps<"div"> {
   review: Review;
 }
 
-export const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => {
+export const AlbumCover = ({
+  className,
+  review,
+  ...props
+}: AlbumCoverProps) => {
   const wrapperRef = useRef<HTMLDivElement>();
   const playAlbum = usePlayAlbum();
   const spotifyApi = useSpotifyApi();
@@ -136,6 +135,16 @@ export const AlbumCover = ({ className, review, ...props }: AlbumCoverProps) => 
             }
           }}
         />
+      )}
+
+      {review.wasPlayed && (
+        <div className="absolute inset-0 bg-opacity-30 bg-gray-200 pointer-events-none text-white group">
+          <div className=" group-hover:opacity-1 text-white bg-white p-1 m-1.5 text-lg absolute bottom-0 left-0">
+            <div className="p-2 bg-pitchfork flex items-center justify-center">
+              <CheckIcon className="h-4 w-4 " />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

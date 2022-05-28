@@ -62,7 +62,6 @@ const ReviewComponent = (review: Review & { index: number }) => {
             e.preventDefault();
             (document.activeElement.previousSibling as HTMLElement).focus();
           }
-        
         }}
       >
         <AlbumCover
