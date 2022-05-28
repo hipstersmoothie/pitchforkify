@@ -2,6 +2,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useCallback, useContext, useMemo } from "react";
 import SpotifyWebApi from "spotify-web-api-node";
 import { Review } from "../pages/api/reviews";
+import { AlbumUserMetadataContext } from "./context";
 import { DEVICE_NAME, PlayerContext } from "./PlayerContext";
 
 export const useSpotifyApi = () => {
@@ -21,6 +22,7 @@ export const useSpotifyApi = () => {
 export const usePlayAlbum = () => {
   const { data: session } = useSession();
   const { playerId, player } = useContext(PlayerContext);
+  const { played } = useContext(AlbumUserMetadataContext);
 
   return useCallback(
     async (review: Review) => {
@@ -48,7 +50,14 @@ export const usePlayAlbum = () => {
           // @ts-ignore
           player.activateElement();
         });
+
+      if (!played.includes(review.spotifyAlbum)) {
+        fetch("/api/played", {
+          method: "PUT",
+          body: JSON.stringify({ uri: review.spotifyAlbum }),
+        });
+      }
     },
-    [player, playerId, session]
+    [player, playerId, session, played]
   );
 };

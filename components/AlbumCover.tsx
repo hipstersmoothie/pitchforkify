@@ -136,13 +136,6 @@ export const AlbumCover = ({
             e.stopPropagation();
             playAlbum(review);
             hasBeenPlayedSet(true);
-
-            if (!hasBeenPlayed) {
-              fetch("/api/played", {
-                method: "PUT",
-                body: JSON.stringify({ uri: review.spotifyAlbum }),
-              });
-            }
           }}
           onKeyDown={(e) => {
             if (e.key === " " || e.key === "Enter") {
