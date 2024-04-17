@@ -1,4 +1,4 @@
-import NextAuth, { User } from "next-auth";
+import NextAuth from "next-auth";
 import { JWT } from "next-auth/jwt";
 import SpotifyProvider from "next-auth/providers/spotify";
 import SpotifyWebApi from "spotify-web-api-node";
@@ -41,6 +41,13 @@ async function refreshAccessToken(token: JWT) {
   }
 }
 
+declare module "next-auth" {
+  interface Session {
+    accessToken: string;
+    providerAccountId: string;
+  }
+}
+
 export default NextAuth({
   secret: process.env.SECRET,
   adapter: PrismaAdapter(prisma),
@@ -62,8 +69,8 @@ export default NextAuth({
   ],
   callbacks: {
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      session.providerAccountId = token.providerAccountId;
+      session.accessToken = token.accessToken as string;
+      session.providerAccountId = token.providerAccountId as string;
       return session;
     },
     async jwt({ user, account, token }) {

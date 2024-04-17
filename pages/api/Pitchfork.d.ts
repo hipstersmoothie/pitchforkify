@@ -144,35 +144,63 @@ export interface Genre3 {
 }
 
 export interface Author {
-  id: string;
   name: string;
-  title: string;
   url: string;
-  slug: string;
+}
+
+interface Image {
+  aspectRatio: string;
+  width: number;
+  url: string;
+  srcset: string;
 }
 
 export interface PitchforkReview {
-  tombstone: Tombstone;
-  artists: Artist2[];
-  genres: Genre3[];
-  channel: string;
-  subChannel: string;
-  position: number;
-  id: string;
+  // artists: Artist2[];
+  // genres: Genre3[];
+  // channel: string;
+  // subChannel: string;
+  // position: number;
+  // id: string;
   url: string;
-  contentType: string;
-  title: string;
-  seoTitle: string;
-  socialTitle: string;
-  promoTitle: string;
-  authors: Author[];
+  // contentType: string;
+  // title: string;
+  // seoTitle: string;
+  // socialTitle: string;
+  // promoTitle: string;
+  // authors: Author[];
   pubDate: Date;
-  timestamp: number;
-  modifiedAt: Date;
-  dek: string;
-  seoDescription: string;
-  promoDescription: string;
-  socialDescription: string;
-  privateTags: string[];
-  tags: any[];
+  // timestamp: number;
+  // modifiedAt: Date;
+  // dek: string;
+  // seoDescription: string;
+  // promoDescription: string;
+  // socialDescription: string;
+  // privateTags: string[];
+  // tags: any[];
+  subHed?: {
+    name: string;
+  };
+  rubric?: {
+    name: string;
+  };
+  image: {
+    altText: string;
+    sources: {
+      sm: Image;
+      lg: Image;
+      xxl: Image;
+    };
+  };
+  contributors: {
+    author?: {
+      items: Author[];
+    };
+  };
+  ratingValue: {
+    isBestNewMusic: boolean;
+    isBestNewReissue: boolean;
+    score: number;
+    channelType: string;
+  };
 }

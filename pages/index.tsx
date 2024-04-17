@@ -16,7 +16,7 @@ export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
   const [filters, setFilters] = useGridFilters();
 
   useEffect(() => {
-    if (session?.error === "RefreshAccessTokenError") {
+    if ((session as any)?.error === "RefreshAccessTokenError") {
       signIn("spotify");
     } else if (session?.accessToken) {
       fetch("/api/pull-favorites");
@@ -49,7 +49,10 @@ export const getStaticProps: GetStaticProps = async () => {
   const reviews = await getReviews({ page: 1 });
 
   return {
-    props: { reviews, layout: "app" },
+    props: {
+      reviews,
+      layout: "app",
+    },
     revalidate: 60 * 60 * 6,
   };
 };
