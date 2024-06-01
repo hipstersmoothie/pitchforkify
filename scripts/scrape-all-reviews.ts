@@ -12,7 +12,7 @@ function sleep(ms: number) {
 async function run() {
   const startPage = 1;
 
-  for (let i = startPage; i >= 0; i--) {
+  for (let i = startPage; i > 0; i--) {
     console.log(`Scraping ${i}`);
     await pRetry(() => scrapeReviews(i), {
       retries: 3,
