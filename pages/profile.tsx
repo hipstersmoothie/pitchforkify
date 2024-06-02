@@ -31,7 +31,6 @@ export default function Profile({
     return null;
   }
 
-  console.log(detailedUser);
   return (
     <div>
       <Head>

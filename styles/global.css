@@ -115,7 +115,6 @@ body {
 }
 
 .loader-animation path {
-  stroke: #1e1e1e;
   stroke-width: 2;
   fill: none;
   stroke-linecap: round;

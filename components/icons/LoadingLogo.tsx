@@ -1,6 +1,6 @@
 export const LoadingLogoIcon = () => (
   <svg
-    className="loader-animation"
+    className="loader-animation stroke-gray-800 dark:stroke-gray-100"
     viewBox="0 0 200 200"
     width="100"
     height="100"

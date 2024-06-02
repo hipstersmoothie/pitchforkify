@@ -527,7 +527,9 @@ export const PlayerControls = () => {
             </div>
             <FavoriteButton
               isSaved={playerState.isSaved}
-              className="p-1"
+              className={`p-1 ${
+                playerState.isSaved ? "" : "dark:stroke-gray-50"
+              }`}
               onClick={() => toggleFavorite(playerState.trackId)}
             />
           </div>
