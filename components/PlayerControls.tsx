@@ -305,7 +305,9 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
               >
                 <FavoriteButton
                   isSaved={track.isSaved}
-                  className="p-1"
+                  className={`p-1 ${
+                    track.isSaved ? "" : "dark:stroke-gray-50"
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(track.id);
