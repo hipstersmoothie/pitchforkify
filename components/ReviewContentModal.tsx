@@ -124,7 +124,10 @@ export const ReviewContentModal = ({
                     {review.albumTitle}
                   </motion.h2>
                   <div className="flex flex-col gap-2 mt-3 dark:text-gray-300 text-xs uppercase">
-                    <ul className="text-[0.65rem] font-bold uppercase flex text-gray-200">
+                    <motion.ul
+                      layoutId={`card-genres-${review.id}`}
+                      className="text-[0.65rem] font-bold uppercase flex text-gray-200"
+                    >
                       {review.genres.map((genre) => (
                         <li
                           className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
@@ -133,7 +136,7 @@ export const ReviewContentModal = ({
                           {genre.name}
                         </li>
                       ))}
-                    </ul>
+                    </motion.ul>
                     <div className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase">
                       <LabelList review={review} />
                       <span>{" • "}</span>

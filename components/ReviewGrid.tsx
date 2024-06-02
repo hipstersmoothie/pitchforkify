@@ -361,7 +361,10 @@ const ReviewComponent = (review: Review & { index: number }) => {
             >
               {review.albumTitle}
             </motion.h2>
-            <ul className="text-[0.65rem] font-bold uppercase flex text-gray-200">
+            <motion.ul
+              layoutId={`card-genres-${review.id}`}
+              className="text-[0.65rem] font-bold uppercase flex text-gray-200"
+            >
               {review.genres.map((genre) => (
                 <li
                   className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
@@ -370,7 +373,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
                   {genre.name}
                 </li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
         </div>
       </motion.article>
