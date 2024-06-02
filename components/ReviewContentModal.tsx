@@ -7,9 +7,8 @@ import { CloseIcon } from "./icons/CloseIcon";
 import { Review } from "../pages/api/reviews";
 
 import { useState } from "react";
-import { Score, TinyScore } from "./Score";
+import { TinyScore } from "./Score";
 import { Tooltip } from "./Tooltip";
-import { AlbumCover } from "./AlbumCover";
 import { ArtistList } from "./ArtistList";
 import { LabelList } from "./LabelList";
 import { AnimatePresence, motion } from "framer-motion";

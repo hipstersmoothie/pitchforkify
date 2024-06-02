@@ -38,8 +38,8 @@ interface RangeInputProps {
   min: number;
   max: number;
   step?: number;
-  values: [number | undefined, number | undefined];
-  onValueChange: (values: [number | undefined, number | undefined]) => void;
+  values: number[];
+  onValueChange: (values: number[]) => void;
 }
 
 const RangeInput = ({
@@ -213,7 +213,11 @@ const Search = ({ addSearchFilter }: SearchProps) => {
       aria-label="Search"
       onSelect={(item) => {
         setSearch("");
-        addSearchFilter(results.find((r) => r.name === item));
+        const newFilter = results.find((r) => r.name === item);
+
+        if (newFilter) {
+          addSearchFilter(newFilter);
+        }
       }}
     >
       <div className="border-gray-300 text-2xl w-full border-b focus:outline-none relative">
@@ -302,13 +306,12 @@ export function useGridFilters() {
 
   useEffect(() => {
     const query = new URLSearchParams(document.location.search);
+    const genre = query.get("genre");
 
     setFilters({
       isBestNew: query.get("isBestNew") === "1",
       search: [],
-      genre: query.get("genre")
-        ? decodeURIComponent(query.get("genre")).split(",")
-        : [],
+      genre: genre ? decodeURIComponent(genre).split(",") : [],
       yearRange:
         query.get("yearStart") || query.get("yearEnd")
           ? {
@@ -592,7 +595,10 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
             <div>
               <SettingTitle>Years</SettingTitle>
               <RangeInput
-                values={[filters.yearRange?.start, filters.yearRange?.end]}
+                values={[
+                  filters.yearRange?.start ?? 0,
+                  filters.yearRange?.end ?? 0,
+                ]}
                 min={FIRST_YEAR}
                 max={CURRENT_YEAR}
                 onValueChange={setYears}
@@ -602,7 +608,7 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
             <div>
               <SettingTitle>Score</SettingTitle>
               <RangeInput
-                values={[filters.score?.start, filters.score?.end]}
+                values={[filters.score?.start ?? 0, filters.score?.end ?? 0]}
                 min={MIN_SCORE}
                 max={MAX_SCORE}
                 onValueChange={setScores}

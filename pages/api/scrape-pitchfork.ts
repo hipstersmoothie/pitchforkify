@@ -70,7 +70,7 @@ async function searchAlbums(artist: string, album: string) {
 interface ParsedReview {
   albumTitle: string;
   cover: string;
-  spotifyAlbum: string;
+  spotifyAlbum: string | null;
   score: number;
   author: string;
   publishDate: Date;

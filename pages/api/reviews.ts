@@ -1,4 +1,4 @@
-import { Genre } from "@prisma/client";
+import { Artist, Genre, Label } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { PAGE_SIZE } from "../../utils/constants";
@@ -56,6 +56,8 @@ export function getReviews(options: GetReviewsOptions) {
 
 export type Review = Awaited<ReturnType<typeof getReviews>>[number] & {
   genres: Genre[];
+  artists: Artist[];
+  labels: Label[];
 };
 
 export default async function reviews(
