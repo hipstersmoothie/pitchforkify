@@ -31,7 +31,7 @@ export const ReviewContentModal = ({
   }
 
   return (
-    <>
+    <AnimatePresence>
       <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>
         <Dialog.Trigger
           className="flex data-[state=open]:z-50 focus:z-50"
@@ -163,6 +163,6 @@ export const ReviewContentModal = ({
           </div>
         </Dialog.Content>
       </Dialog.Root>
-    </>
+    </AnimatePresence>
   );
 };
