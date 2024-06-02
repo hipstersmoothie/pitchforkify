@@ -183,7 +183,8 @@ const ReviewComponent = (review: Review & { index: number }) => {
 
   return (
     <ReviewContentModal review={review}>
-      <article
+      <motion.article
+        layoutId={`card-container-${review.id}`}
         className={`
           review-item 
           group
@@ -240,7 +241,6 @@ const ReviewComponent = (review: Review & { index: number }) => {
             }}
             animate={mouse.isHovering ? "hovering" : "idle"}
             className="relative overflow-hidden rounded-2xl"
-            layoutId={`card-container-${review.id}`}
           >
             <motion.div
               variants={{
@@ -312,7 +312,9 @@ const ReviewComponent = (review: Review & { index: number }) => {
                 }
               }}
             />
-            <TinyScore score={review.score} isBestNew={review.isBestNew} />
+            <motion.div layoutId={`card-score-${review.id}`}>
+              <TinyScore score={review.score} isBestNew={review.isBestNew} />
+            </motion.div>
           </div>
 
           {review.spotifyAlbum && (
@@ -370,7 +372,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
             </ul>
           </div>
         </div>
-      </article>
+      </motion.article>
     </ReviewContentModal>
   );
 };

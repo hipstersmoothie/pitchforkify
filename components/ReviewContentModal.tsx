@@ -31,12 +31,13 @@ export const ReviewContentModal = ({
   }
 
   return (
-    <AnimatePresence>
+    <>
       <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>
         <Dialog.Trigger
-          className="flex"
+          className="flex data-[state=open]:z-50 focus:z-50"
           asChild
           style={{ WebkitAppearance: "none" }}
+          data-review={review.id}
           onKeyDown={(e) => {
             if (e.key === " " || e.key === "Enter") {
               setOpen(true);
@@ -76,6 +77,10 @@ export const ReviewContentModal = ({
                 rounded-2xl overflow-hidden
               "
               layoutId={`card-container-${review.id}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, delay: 0.1 }}
             >
               <div className="flex items-center gap-6 pt-2 px-2">
                 <motion.div
@@ -99,11 +104,15 @@ export const ReviewContentModal = ({
                     alt=""
                     layout="responsive"
                   />
-                  <TinyScore
-                    score={review.score}
-                    isBestNew={review.isBestNew}
+                  <motion.div
+                    layoutId={`card-score-${review.id}`}
                     className="absolute left-3 top-3"
-                  />
+                  >
+                    <TinyScore
+                      score={review.score}
+                      isBestNew={review.isBestNew}
+                    />
+                  </motion.div>
                 </motion.div>
                 <div className="flex flex-col gap-2">
                   <motion.div layoutId={`card-artist-${review.id}`}>
@@ -115,10 +124,22 @@ export const ReviewContentModal = ({
                   >
                     {review.albumTitle}
                   </motion.h2>
-                  <div className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase h-8">
-                    <LabelList review={review} />
-                    <span>{" • "}</span>
-                    <span>{getYear(new Date(review.publishDate))}</span>
+                  <div className="flex flex-col gap-2 mt-3 dark:text-gray-300 text-xs uppercase">
+                    <ul className="text-[0.65rem] font-bold uppercase flex text-gray-200">
+                      {review.genres.map((genre) => (
+                        <li
+                          className="after:content-['/'] last:after:content-[''] after:px-1 last:after:px-0"
+                          key={`${genre.id}-${review.id}`}
+                        >
+                          {genre.name}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase">
+                      <LabelList review={review} />
+                      <span>{" • "}</span>
+                      <span>{getYear(new Date(review.publishDate))}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -142,6 +163,6 @@ export const ReviewContentModal = ({
           </div>
         </Dialog.Content>
       </Dialog.Root>
-    </AnimatePresence>
+    </>
   );
 };

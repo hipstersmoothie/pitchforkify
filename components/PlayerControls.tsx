@@ -29,7 +29,6 @@ import { HomeIcon } from "./icons/HomeIcon";
 import { Tooltip } from "./Tooltip";
 import { FavoriteButton } from "./FavoriteButton";
 import { Review } from "../pages/api/reviews";
-import { ReviewContentModal } from "./ReviewContentModal";
 
 const getAlbumFromOffset = (
   reviews: Review[],
@@ -460,7 +459,7 @@ export const PlayerControls = () => {
   }
 
   return (
-    <div className={makeClass("fixed left-4 right-4 bottom-2 z-50")}>
+    <div className={makeClass("fixed left-4 right-4 bottom-1 z-50")}>
       <TrackSwitcher
         toggleFavorite={toggleFavorite}
         open={open}
@@ -474,29 +473,35 @@ export const PlayerControls = () => {
         )}
       >
         <div className={"mx-2 flex items-center border-box my-1 md:my-0"}>
-          <ReviewContentModal
-            review={
-              reviews.find((r) => r.spotifyAlbum === playerState.album) ||
-              randomReview
-            }
+          <button
+            className={makeClass(
+              "h-12 w-12 border mr-3 md:mr-4 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden",
+              "md:h-20 md:w-20",
+              "cursor-pointer focus:outline-none keyboard-focus:shadow-focus-tight keyboard-focus:rounded"
+            )}
+            tabIndex={0}
+            onClick={() => {
+              const currentReview =
+                reviews.find((r) => r.spotifyAlbum === playerState.album) ||
+                randomReview;
+
+              if (currentReview) {
+                document
+                  .querySelector<HTMLElement>(
+                    `[data-review="${currentReview.id}"]`
+                  )
+                  ?.click();
+              }
+            }}
           >
-            <div
-              className={makeClass(
-                "h-12 w-12 border mr-3 md:mr-4 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden",
-                "md:h-20 md:w-20",
-                "cursor-pointer focus:outline-none keyboard-focus:shadow-focus-tight keyboard-focus:rounded"
-              )}
-              tabIndex={0}
-            >
-              <Image
-                src={playerState.cover}
-                alt=""
-                height={80}
-                width={80}
-                layout="fixed"
-              />
-            </div>
-          </ReviewContentModal>
+            <Image
+              src={playerState.cover}
+              alt=""
+              height={80}
+              width={80}
+              layout="fixed"
+            />
+          </button>
           <div className="flex-1 min-w-0 flex items-center">
             <div className="mr-6 dark:text-gray-300">
               <div className="font-medium md:font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">

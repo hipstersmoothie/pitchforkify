@@ -17,6 +17,7 @@ import { ReviewsContext } from "../utils/context";
 import { useState } from "react";
 import { Review } from "./api/reviews";
 import { ClerkProvider } from "@clerk/nextjs";
+import { AnimatePresence } from "framer-motion";
 
 const queryClient = new QueryClient();
 
@@ -43,7 +44,9 @@ export default function App({ Component, pageProps }) {
                 <PlayerStateContextProvider>
                   <Header />
                   <main className="bg-gray-200 dark:bg-gray-950">
-                    <Component {...pageProps} />
+                    <AnimatePresence>
+                      <Component {...pageProps} />
+                    </AnimatePresence>
                   </main>
                   <PlayerControls />
                 </PlayerStateContextProvider>

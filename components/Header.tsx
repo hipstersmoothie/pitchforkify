@@ -21,7 +21,10 @@ const AccountButton = ({
   <button
     className={makeClass(
       className,
-      "rounded px-4 h-10 cursor-pointer border border-gray-300 hover:bg-gray-100 active:bg-gray-200  focus:outline-none keyboard-focus:shadow-focus",
+      "rounded px-4 h-10 cursor-pointer focus:outline-none keyboard-focus:shadow-focus",
+      "border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-700",
+      "active:bg-gray-200 bg-gray-50 bg-opacity-5 hover:bg-opacity-10",
+      "text-gray-800 dark:text-gray-100",
       "flex items-center justify-center"
     )}
     {...props}
@@ -123,17 +126,17 @@ export const Header = () => {
               </DropdownMenu.Trigger>
 
               <DropdownMenu.Content
-                className="border border-gray-400 rounded bg-white"
+                className="border border-gray-400 dark:border-gray-700 rounded bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100"
                 sideOffset={10}
               >
                 <DropdownMenu.Item
-                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer"
+                  className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer hover:bg-gray-50 hover:bg-opacity-10"
                   onClick={() => router.push("/profile")}
                 >
                   Profile
                 </DropdownMenu.Item>
                 <SignOutButton>
-                  <DropdownMenu.Item className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer">
+                  <DropdownMenu.Item className="px-4 py-2 focus:outline-none keyboard-focus:shadow-focus-inner rounded cursor-pointer hover:bg-gray-50 hover:bg-opacity-10">
                     Sign out
                   </DropdownMenu.Item>
                 </SignOutButton>
