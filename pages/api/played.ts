@@ -1,54 +1,37 @@
+import { getAuth } from "@clerk/nextjs/server";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Session } from "next-auth";
-import { getSession } from "next-auth/react";
 
 import prisma from "../../utils/primsa";
 
-export async function getAllPlayedUrisForSession(session: Session) {
-  const { playedAlbums } = await prisma.account.findFirst({
-    where: {
-      providerAccountId: session.providerAccountId as string,
-    },
-    select: {
-      playedAlbums: true,
-    },
+async function getAllPlayedUrisForSession(userId: string) {
+  const res = await prisma.playedAlbum.findMany({
+    where: { userId },
   });
 
-  return playedAlbums.map((savedAlbum) => savedAlbum.uri);
+  return res?.map((savedAlbum) => savedAlbum.uri) || [];
 }
 
 export default async function played(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  const { userId } = getAuth(req);
+
+  if (!userId) {
+    return res.status(403).send(false);
+  }
 
   if (req.method === "GET") {
-    if (!session) {
-      return res.status(200).json([]);
-    }
-
-    const uris = await getAllPlayedUrisForSession(session);
+    const uris = await getAllPlayedUrisForSession(userId);
 
     return res.status(200).json(uris);
   } else if (req.method === "PUT") {
     const { uri } = JSON.parse(req.body);
 
-    await prisma.account.update({
-      where: {
-        provider_providerAccountId: {
-          provider: "spotify",
-          providerAccountId: session.providerAccountId as string,
-        },
-      },
-      data: {
-        playedAlbums: {
-          connectOrCreate: {
-            where: { uri },
-            create: { uri },
-          },
-        },
-      },
+    await prisma.playedAlbum.upsert({
+      where: { uri_userId: { uri, userId } },
+      create: { userId, uri },
+      update: {},
     });
 
     return res.status(200).json(uri);

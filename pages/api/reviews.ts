@@ -1,3 +1,4 @@
+import { Genre } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 import { PAGE_SIZE } from "../../utils/constants";
@@ -53,7 +54,9 @@ export function getReviews(options: GetReviewsOptions) {
     );
 }
 
-export type Review = Awaited<ReturnType<typeof getReviews>>[number];
+export type Review = Awaited<ReturnType<typeof getReviews>>[number] & {
+  genres: Genre[];
+};
 
 export default async function reviews(
   req: NextApiRequest,
@@ -61,7 +64,7 @@ export default async function reviews(
 ) {
   const reviews = await getReviews({
     ...parseGridFilterQuery(req.query),
-    page: req.query.page ? Number(req.query.page) : undefined,
+    page: req.query.page ? Number(req.query.page) : 1,
     cursor: req.query.cursor ? Number(req.query.cursor) : undefined,
   });
 

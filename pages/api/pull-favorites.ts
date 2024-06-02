@@ -1,28 +1,27 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
 import SpotifyWebApi from "spotify-web-api-node";
 import { chunkPromise, PromiseFlavor } from "chunk-promise";
+import { clerkClient, getAuth } from "@clerk/nextjs/server";
 
 import prisma from "../../utils/primsa";
 import { sleep } from "../../utils/sleep";
 
-export async function pullFavorites(token: string, providerAccountId: string) {
+export async function pullFavorites(userId: string) {
+  const tokenData = await clerkClient.users.getUserOauthAccessToken(
+    userId,
+    "oauth_spotify"
+  );
+
   const spotifyApi = new SpotifyWebApi({
     clientId: process.env.SPOTIFY_CLIENT_ID,
-    accessToken: token,
+    accessToken: tokenData.data[0].token,
   });
 
-  const { lastSavedAlbum } = await prisma.account.findUnique({
-    where: {
-      provider_providerAccountId: {
-        provider: "spotify",
-        providerAccountId: providerAccountId,
-      },
-    },
-    select: {
-      lastSavedAlbum: true,
-    },
-  });
+  let user = await prisma.user.findFirst({ where: { id: userId } });
+
+  if (!user) {
+    user = await prisma.user.create({ data: { id: userId } });
+  }
 
   async function getNewSavedAlbums() {
     let albums: SpotifyApi.SavedAlbumObject[] = [];
@@ -38,7 +37,7 @@ export async function pullFavorites(token: string, providerAccountId: string) {
         });
 
         const lastSavedIndex = items.findIndex(
-          (item) => item.album.uri === lastSavedAlbum
+          (item) => item.album.uri === user?.lastSavedAlbum
         );
         const hasLastSaved = lastSavedIndex !== -1;
 
@@ -82,23 +81,15 @@ export async function pullFavorites(token: string, providerAccountId: string) {
   await chunkPromise(
     [...new Set(uris)].map((uri) => () => {
       console.log("Adding favorite", uri);
-      return prisma.account.update({
+      return prisma.savedAlbum.upsert({
         where: {
-          provider_providerAccountId: {
-            provider: "spotify",
-            providerAccountId: providerAccountId,
-          },
+          uri_userId: { userId, uri },
         },
-        data: {
-          savedAlbums: {
-            connectOrCreate: [
-              {
-                where: { uri },
-                create: { uri },
-              },
-            ],
-          },
+        create: {
+          userId,
+          uri,
         },
+        update: {},
       });
     }),
     {
@@ -108,12 +99,9 @@ export async function pullFavorites(token: string, providerAccountId: string) {
   );
 
   if (uris[0]) {
-    await prisma.account.update({
+    await prisma.user.update({
       where: {
-        provider_providerAccountId: {
-          provider: "spotify",
-          providerAccountId: providerAccountId,
-        },
+        id: userId,
       },
       data: {
         lastSavedAlbum: uris[0],
@@ -126,16 +114,13 @@ export default async function pullFavoritesEndpoint(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  const { userId } = getAuth(req);
 
-  if (!session) {
+  if (!userId) {
     return res.status(403).send(false);
   }
 
-  await pullFavorites(
-    session.accessToken as string,
-    session.providerAccountId as string
-  );
+  await pullFavorites(userId);
 
   res.status(200).send(true);
 }

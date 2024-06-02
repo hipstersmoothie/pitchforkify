@@ -472,7 +472,7 @@ export const GridFilter = ({ filters, setFilters }: GridFilterProps) => {
   );
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-screen-2xl">
       <Collapsible.Root
         className="mt-5 sm:mt-8 border rounded-lg mx-2 sm:mx-8"
         open={open}

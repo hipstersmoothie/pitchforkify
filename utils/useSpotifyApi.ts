@@ -1,45 +1,51 @@
-import { signIn, useSession } from "next-auth/react";
 import { useCallback, useContext, useMemo } from "react";
 import SpotifyWebApi from "spotify-web-api-node";
 import { Review } from "../pages/api/reviews";
 import { AlbumUserMetadataContext } from "./context";
 import { DEVICE_NAME, PlayerContext } from "./PlayerContext";
+import { useSpotifyAccessToken } from "./useSpotifyAccessToken";
 
 export const useSpotifyApi = () => {
-  const { data: session } = useSession();
-  const spotifyApi = useMemo(
-    () =>
-      new SpotifyWebApi({
+  const spotifyAccessToken = useSpotifyAccessToken();
+  const spotifyApi = useMemo(() => {
+    if (spotifyAccessToken) {
+      return new SpotifyWebApi({
         clientId: process.env.SPOTIFY_CLIENT_ID,
-        ...session,
-      }),
-    [session]
-  );
+        accessToken: spotifyAccessToken,
+      });
+    }
+
+    return null;
+  }, [spotifyAccessToken]);
 
   return spotifyApi;
 };
 
 export const usePlayAlbum = () => {
-  const { data: session } = useSession();
   const { playerId, player } = useContext(PlayerContext);
   const { played } = useContext(AlbumUserMetadataContext);
+  const spotifyApi = useSpotifyApi();
 
   return useCallback(
     async (review: Review) => {
-      if (!session) {
-        return signIn("spotify");
+      if (!spotifyApi || !review.spotifyAlbum) {
+        return;
       }
-
-      const spotifyApi = new SpotifyWebApi({
-        clientId: process.env.SPOTIFY_CLIENT_ID,
-        ...session,
-      });
 
       const {
         body: { devices },
       } = await spotifyApi.getMyDevices();
-      const appPlayer = devices.find((d) => d.name !== DEVICE_NAME);
+      const appPlayer = devices.find((d) => d.name === DEVICE_NAME);
+
+      if (!appPlayer) {
+        return;
+      }
+
       const device_id = playerId || appPlayer.id;
+
+      if (!device_id) {
+        return;
+      }
 
       spotifyApi
         .play({
@@ -58,6 +64,6 @@ export const usePlayAlbum = () => {
         });
       }
     },
-    [player, playerId, session, played]
+    [spotifyApi, playerId, played, player]
   );
 };

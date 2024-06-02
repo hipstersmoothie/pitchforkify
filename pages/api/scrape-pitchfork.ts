@@ -36,15 +36,12 @@ async function getPage(url: string) {
 
 async function searchAlbums(artist: string, album: string) {
   try {
-    const {
-      body: {
-        albums: { items },
-      },
-    } = await spotifyApi.search(`${artist} ${album.replace("EP", "")}`, [
-      "album",
-    ]);
+    const res = await spotifyApi.search(
+      `${artist} ${album.replace("EP", "")}`,
+      ["album"]
+    );
 
-    return items;
+    return res.body.albums?.items || [];
   } catch (error) {
     console.log(error);
     if (
@@ -104,7 +101,7 @@ async function parseReview(
   let reviewHtml = [
     blurb ? `<div class="review-blurb">${blurb}</div>` : "",
     ...$reviewPageEl('[data-testid="BodyWrapper"]')
-      .map((i, el) => $reviewPageEl(el).html().toString())
+      .map((i, el) => $reviewPageEl(el).html()?.toString())
       .toArray(),
   ]
     .filter(Boolean)
@@ -122,25 +119,27 @@ async function parseReview(
   const labelLabel = $reviewPageEl("*")
     .toArray()
     .filter((el) => $reviewPageEl(el).text() === "Label:")[0];
-  const labels = labelLabel
-    ? $reviewPageEl(labelLabel.nextSibling)
-        .text()
-        .split("/")
-        .map((item) => ({
-          name: item.trim(),
-        }))
-    : [];
+  const labels =
+    labelLabel && labelLabel.nextSibling
+      ? $reviewPageEl(labelLabel.nextSibling)
+          .text()
+          .split("/")
+          .map((item) => ({
+            name: item.trim(),
+          }))
+      : [];
   const genreLabel = $reviewPageEl("*")
     .toArray()
     .filter((el) => $reviewPageEl(el).text() === "Genre:")[0];
-  const genres = genreLabel
-    ? $reviewPageEl(genreLabel.nextSibling)
-        .text()
-        .split("/")
-        .map((item) => ({
-          name: item.trim(),
-        }))
-    : [];
+  const genres =
+    genreLabel && genreLabel.nextSibling
+      ? $reviewPageEl(genreLabel.nextSibling)
+          .text()
+          .split("/")
+          .map((item) => ({
+            name: item.trim(),
+          }))
+      : [];
 
   return {
     albumTitle,
@@ -166,9 +165,10 @@ export async function scrapeReviews(page: number) {
       console.log(error);
     },
   });
-  let [, appString] = $.html()
-    .toString()
-    .match(/window\.__PRELOADED_STATE__ = ([\s\S]*?};)/m);
+  let [, appString] =
+    $.html()
+      .toString()
+      .match(/window\.__PRELOADED_STATE__ = ([\s\S]*?};)/m) || [];
 
   appString = appString.replace(/;$/, "");
 
@@ -227,6 +227,7 @@ export async function scrapeReviews(page: number) {
           { hasSpotify: Boolean(data.spotifyAlbum) }
         );
       } catch (error) {
+        // @ts-ignore
         delete data.reviewHtml;
         console.log(error);
         console.log(JSON.stringify(data, null, 2));

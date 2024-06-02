@@ -1,4 +1,3 @@
-import { useSession, signIn } from "next-auth/react";
 import { GetStaticProps } from "next";
 import Head from "next/head";
 import { useEffect } from "react";
@@ -10,15 +9,15 @@ import {
   hasActiveFilters,
   useGridFilters,
 } from "../components/GridFilter";
+import { useSession } from "@clerk/nextjs";
 
 export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
-  const { data: session } = useSession();
+  const { session } = useSession();
   const [filters, setFilters] = useGridFilters();
 
   useEffect(() => {
-    if ((session as any)?.error === "RefreshAccessTokenError") {
-      signIn("spotify");
-    } else if (session?.accessToken) {
+    if (session) {
+      console.log("fetching reviews");
       fetch("/api/pull-favorites");
     }
   }, [session]);
@@ -34,7 +33,7 @@ export default function Home({ reviews }: Omit<ReviewGridProps, "endpoint">) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <GridFilter filters={filters} setFilters={setFilters} />
+      {/* <GridFilter filters={filters} setFilters={setFilters} /> */}
       <ReviewGrid
         reviews={hasActiveFilters(filters) ? [] : reviews}
         filters={filters}

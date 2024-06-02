@@ -1,5 +1,3 @@
-import prisma from "../utils/primsa";
-
 require("dotenv").config();
 
 import { scrapeReviews } from "../pages/api/scrape-pitchfork";

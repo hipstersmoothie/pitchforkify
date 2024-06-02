@@ -1,74 +1,45 @@
+import { getAuth } from "@clerk/nextjs/server";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Session } from "next-auth";
-import { getSession } from "next-auth/react";
 
 import prisma from "../../utils/primsa";
 
-export async function getAllFavoritesUrisForSession(session: Session) {
-  const { savedAlbums } = await prisma.account.findFirst({
-    where: {
-      providerAccountId: session.providerAccountId as string,
-    },
-    select: {
-      savedAlbums: true,
-    },
+export async function getAllFavoritesUrisForSession(userId: string) {
+  const data = await prisma.savedAlbum.findMany({
+    where: { userId },
   });
 
-  return savedAlbums.map((savedAlbum) => savedAlbum.uri);
+  return data.map((savedAlbum) => savedAlbum.uri);
 }
 
 export default async function favorites(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
+  const { userId } = getAuth(req);
+
+  if (!userId) {
+    return res.status(403).send(false);
+  }
 
   if (req.method === "GET") {
-    if (!session) {
-      return res.status(200).json([]);
-    }
-
-    const uris = await getAllFavoritesUrisForSession(session);
+    const uris = await getAllFavoritesUrisForSession(userId);
 
     return res.status(200).json(uris);
   } else if (req.method === "DELETE") {
     const { uri } = JSON.parse(req.body);
 
-    await prisma.account.update({
-      where: {
-        provider_providerAccountId: {
-          provider: "spotify",
-          providerAccountId: session.providerAccountId as string,
-        },
-      },
-      data: {
-        savedAlbums: {
-          delete: {
-            uri,
-          },
-        },
-      },
+    await prisma.savedAlbum.delete({
+      where: { uri_userId: { userId, uri } },
     });
 
     return res.status(200).json(uri);
   } else if (req.method === "PUT") {
     const { uri } = JSON.parse(req.body);
 
-    await prisma.account.update({
-      where: {
-        provider_providerAccountId: {
-          provider: "spotify",
-          providerAccountId: session.providerAccountId as string,
-        },
-      },
-      data: {
-        savedAlbums: {
-          connectOrCreate: {
-            where: { uri },
-            create: { uri },
-          },
-        },
-      },
+    await prisma.savedAlbum.upsert({
+      where: { uri_userId: { userId, uri } },
+      create: { userId, uri },
+      update: {},
     });
 
     return res.status(200).json(uri);

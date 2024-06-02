@@ -1,5 +1,5 @@
+import { getAuth } from "@clerk/nextjs/server";
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getSession } from "next-auth/react";
 import { PAGE_SIZE } from "../../utils/constants";
 import {
   buildGridFilterWhere,
@@ -58,8 +58,13 @@ export default async function favoriteReviews(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getSession({ req });
-  const favorites = await getAllFavoritesUrisForSession(session);
+  const { userId } = getAuth(req);
+
+  if (!userId) {
+    return res.status(403).send(false);
+  }
+
+  const favorites = await getAllFavoritesUrisForSession(userId);
   const reviews = await getFavoriteReviews({
     favorites,
     cursor: req.query.cursor ? Number(req.query.cursor) : undefined,

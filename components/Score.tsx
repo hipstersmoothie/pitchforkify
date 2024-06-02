@@ -17,11 +17,11 @@ export const Score = ({
 }: ScoreProps) => {
   return (
     <div className="flex items-center flex-col gap-4 md:gap-6">
-      {isBestNew && isBig && <BestNewBadge />}
+      {/* {isBestNew && isBig && <BestNewBadge />} */}
       <div
         className={makeClass(
           className,
-          !className?.includes("border-") && " border-gray-800",
+          !className?.includes("border-") && !isBestNew && "border-gray-0",
           "font-extrabold border-4 rounded-full p-2 mb-3 w-12 h-12",
           isBig === true &&
             "text-5xl border-[6px] w-28 h-28 flex items-center justify-center",

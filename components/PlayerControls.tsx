@@ -56,7 +56,7 @@ interface PlaybackStateContextShape {
   setPlayerState: (newState: PlayerState) => void;
 }
 
-const PlayerStateContext = createContext<PlaybackStateContextShape>({
+export const PlayerStateContext = createContext<PlaybackStateContextShape>({
   playerState: {
     playing: false,
     album: "",
@@ -99,7 +99,7 @@ export const PlayerStateContextProvider = ({
     }
 
     const playerStateChanged = async (newState: Spotify.PlaybackState) => {
-      if (!newState) {
+      if (!newState || !spotifyApi) {
         return;
       }
 
@@ -125,20 +125,26 @@ export const PlayerStateContextProvider = ({
       const trackId = newState.track_window.current_track.id;
       const {
         body: [isSaved],
-      } = await spotifyApi.containsMySavedTracks([trackId]);
+      } = await spotifyApi.containsMySavedTracks([
+        trackId,
+      ] as readonly string[]);
 
       tryingToPlayNextAlbum.current = false;
 
+      const currentTrack = newState.track_window.current_track;
+
+      if (!currentTrack || !currentTrack.id) {
+        return;
+      }
+
       setPlayerState({
         playing: !newState.paused,
-        album: newState.track_window.current_track.album.uri,
-        artist: newState.track_window.current_track.artists
-          .map((a) => a.name)
-          .join(", "),
-        track: newState.track_window.current_track.name,
-        trackId: newState.track_window.current_track.id,
+        album: currentTrack.album.uri,
+        artist: currentTrack.artists.map((a) => a.name).join(", "),
+        track: currentTrack.name,
+        trackId: currentTrack.id,
         duration: newState.duration,
-        cover: newState.track_window.current_track.album.images[1].url,
+        cover: currentTrack.album.images[1].url,
         isSaved,
       });
     };
@@ -180,6 +186,10 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
 
   useEffect(() => {
     async function fetchTracks() {
+      if (!spotifyApi) {
+        return;
+      }
+
       const tracksData = await spotifyApi.getAlbumTracks(
         playerState.album.replace("spotify:album:", ""),
         { limit: 50 }
@@ -230,6 +240,10 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={async () => {
+                if (!spotifyApi) {
+                  return;
+                }
+
                 if (playerState.playing && playerState.trackId === track.id) {
                   spotifyApi.pause();
                 } else {
@@ -241,14 +255,14 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
               onKeyDown={(e) => {
                 if (
                   e.key === "ArrowDown" &&
-                  document.activeElement.nextSibling
+                  document.activeElement?.nextSibling
                 ) {
                   e.stopPropagation();
                   e.preventDefault();
                   (document.activeElement.nextSibling as HTMLElement).focus();
                 } else if (
                   e.key === "ArrowUp" &&
-                  document.activeElement.previousSibling
+                  document.activeElement?.previousSibling
                 ) {
                   e.stopPropagation();
                   e.preventDefault();
@@ -256,8 +270,9 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
                     document.activeElement.previousSibling as HTMLElement
                   ).focus();
                 }
+
                 if (e.key === " " || e.key === "Enter") {
-                  spotifyApi.play({ uris: [track.uri] });
+                  spotifyApi?.play({ uris: [track.uri] });
                 }
               }}
             >
@@ -327,7 +342,7 @@ export const PlayerControls = () => {
   // Enable "Space" to toggle playback
   useEffect(() => {
     function pressSpace(e: KeyboardEvent) {
-      if (e.key === " " && playerState.track) {
+      if (e.key === " " && playerState.track && player) {
         player.togglePlay();
         e.preventDefault();
       }
@@ -376,8 +391,12 @@ export const PlayerControls = () => {
   ]);
 
   const playPreviousTrack = useCallback(() => {
-    player.getCurrentState().then((s) => {
+    player?.getCurrentState().then((s) => {
       if (s?.track_window.previous_tracks.length === 0) {
+        if (!s.context.uri) {
+          return;
+        }
+
         const prevAlbum = getAlbumFromOffset(reviews, s.context.uri, -1);
 
         if (prevAlbum) {
@@ -390,8 +409,12 @@ export const PlayerControls = () => {
   }, [reviews, playAlbum, player]);
 
   const playNextTrack = useCallback(() => {
-    player.getCurrentState().then((s) => {
+    player?.getCurrentState().then((s) => {
       if (s?.track_window.next_tracks.length === 0) {
+        if (!s.context.uri) {
+          return;
+        }
+
         const nextAlbum = getAlbumFromOffset(reviews, s.context.uri, 1);
 
         if (nextAlbum) {
@@ -405,6 +428,10 @@ export const PlayerControls = () => {
 
   const toggleFavorite = useCallback(
     async (trackId: string) => {
+      if (!spotifyApi) {
+        return;
+      }
+
       const {
         body: [isSaved],
       } = await spotifyApi.containsMySavedTracks([trackId]);
@@ -480,7 +507,7 @@ export const PlayerControls = () => {
         </div>
 
         <button
-          onClick={() => player.togglePlay()}
+          onClick={() => player?.togglePlay()}
           className="md:hidden w-8 self-stretch flex items-center justify-center"
         >
           {playerState.playing ? <PauseIcon /> : <PlayIcon />}
@@ -510,7 +537,7 @@ export const PlayerControls = () => {
           <Tooltip message={playerState.playing ? "Pause" : "Play"}>
             <PlayButton
               isPlaying={playerState.playing}
-              onClick={() => player.togglePlay()}
+              onClick={() => player?.togglePlay()}
             />
           </Tooltip>
           <Tooltip message="Next">
@@ -573,6 +600,10 @@ export const PlayerControls = () => {
             <button
               className="mr-2 focus:outline-none keyboard-focus:shadow-focus rounded"
               onClick={() => {
+                if (!player) {
+                  return;
+                }
+
                 let newVolume = volumeBeforeMute.current;
 
                 if (volume !== 0) {
@@ -591,6 +622,10 @@ export const PlayerControls = () => {
             max={100}
             value={volume * 100}
             onChange={(newVolume) => {
+              if (!player) {
+                return;
+              }
+
               setVolume(newVolume / 100);
               player.setVolume(newVolume / 100);
             }}

@@ -15,14 +15,14 @@ export const Tooltip = ({
   message,
   side = "top",
   sideOffset = 8,
-  delayDuration = 3 * 1000,
+  delayDuration,
 }: TooltipProps) => (
   <TooltipPrimitive.Root delayDuration={delayDuration}>
     <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
     <TooltipPrimitive.Content
       side={side}
       sideOffset={sideOffset}
-      className="border border-gray-200 px-4 py-2 shadow-md bg-white rounded"
+      className="px-2 py-1 shadow-md bg-gray-900 dark:bg-gray-100 rounded text-xs text-gray-100 dark:text-gray-900"
     >
       {message}
     </TooltipPrimitive.Content>

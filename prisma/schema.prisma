@@ -2,75 +2,39 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["referentialIntegrity"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider             = "mysql"
-  url                  = env("DATABASE_URL")
-  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
-  referentialIntegrity = "prisma"
-}
-
-model Account {
-  id                 String        @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?       @db.VarChar(1000)
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
-  oauth_token_secret String?
-  oauth_token        String?
-  lastSavedAlbum     String?
-  savedAlbums        SavedAlbum[]  @relation(references: [uri])
-  playedAlbums       PlayedAlbum[] @relation(references: [uri])
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-}
-
-model SavedAlbum {
-  uri      String    @id @unique
-  accounts Account[] @relation(references: [id])
-}
-
-model PlayedAlbum {
-  uri      String    @id @unique
-  accounts Account[] @relation(references: [id])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?   @db.VarChar(400)
-  accounts      Account[]
-  sessions      Session[]
+  id             String        @id @default(cuid())
+  lastSavedAlbum String?
+  savedAlbums    SavedAlbum[]
+  playedAlbums   PlayedAlbum[]
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
+model SavedAlbum {
+  uri    String
+  userId String
+  User   User   @relation(fields: [userId], references: [id])
 
-  @@unique([identifier, token])
+  @@unique([uri, userId])
+  @@index([userId])
+}
+
+model PlayedAlbum {
+  uri    String
+  userId String
+  User   User?  @relation(fields: [userId], references: [id])
+
+  @@unique([uri, userId])
+  @@index([userId])
 }
 
 model Review {
@@ -86,9 +50,9 @@ model Review {
   score        Float
   publishDate  DateTime
   isBestNew    Boolean
-  labels       Label[]  @relation(references: [id])
-  artists      Artist[] @relation(references: [id])
-  genres       Genre[]  @relation(references: [id])
+  labels       Label[]
+  artists      Artist[]
+  genres       Genre[]
 
   @@unique([albumTitle, publishDate])
 }
@@ -97,19 +61,19 @@ model Label {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews Review[] @relation(references: [id])
+  reviews Review[]
 }
 
 model Artist {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews Review[] @relation(references: [id])
+  reviews Review[]
 }
 
 model Genre {
   id   Int    @id @default(autoincrement())
   name String @unique
 
-  reviews Review[] @relation(references: [id])
+  reviews Review[]
 }

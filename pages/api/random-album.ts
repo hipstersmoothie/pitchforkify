@@ -18,6 +18,10 @@ export default async function random(
     },
   });
 
+  if (!review) {
+    return res.status(404).json({});
+  }
+
   res.status(200).json({
     ...review,
     publishDate: review.publishDate.toUTCString(),
