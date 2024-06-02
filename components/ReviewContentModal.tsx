@@ -7,11 +7,13 @@ import { CloseIcon } from "./icons/CloseIcon";
 import { Review } from "../pages/api/reviews";
 
 import { useState } from "react";
-import { Score } from "./Score";
+import { Score, TinyScore } from "./Score";
 import { Tooltip } from "./Tooltip";
 import { AlbumCover } from "./AlbumCover";
 import { ArtistList } from "./ArtistList";
 import { LabelList } from "./LabelList";
+import { AnimatePresence, motion } from "framer-motion";
+import Image from "next/image";
 
 interface ReviewContentModalProps {
   review?: Review;
@@ -30,69 +32,117 @@ export const ReviewContentModal = ({
   }
 
   return (
-    <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger
-        className="flex"
-        asChild
-        style={{ WebkitAppearance: "none" }}
-        onKeyDown={(e) => {
-          if (e.key === " " || e.key === "Enter") {
-            setOpen(true);
-            e.stopPropagation();
-            e.preventDefault();
-          }
-        }}
-      >
-        {children}
-      </Dialog.Trigger>
-      <Dialog.Overlay className="bg-[rgba(34,34,34,.98)] fixed inset-0" />
-      <Dialog.Content
-        className="fixed text-white h-screen overflow-auto mx-auto w-full pb-12"
-        onOpenAutoFocus={(e) => {
-          if (!isKeyboardNav) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <Tooltip message="Close Review">
-          <Dialog.Close asChild>
-            <button className="fixed top-0 right-0 p-3 m-3 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">
-              <CloseIcon />
-            </button>
-          </Dialog.Close>
-        </Tooltip>
-        <Dialog.Title asChild className="text-center mt-6 mb-2">
-          <div>
-            <ArtistList review={review} className="text-2xl mb-2" />
-            <h2 className="font-semibold italic text-2xl mb-10">
-              {review.albumTitle}
-            </h2>
-
-            <div className="flex items-center mx-8 mb-4 md:mb-12 gap-6 md:gap-10 justify-center">
-              <div className="w-full max-h-[300px] max-w-[300px]">
-                <AlbumCover review={review} className="mb-2 border-gray-800" />
-                <div className="flex items-center gap-1 text-gray-300 text-xs uppercase">
-                  <LabelList review={review} />
-                  <span>{" • "}</span>
-                  <span>{getYear(new Date(review.publishDate))}</span>
+    <AnimatePresence>
+      <Dialog.Root modal={true} open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger
+          className="flex"
+          asChild
+          style={{ WebkitAppearance: "none" }}
+          onKeyDown={(e) => {
+            if (e.key === " " || e.key === "Enter") {
+              setOpen(true);
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          }}
+        >
+          {children}
+        </Dialog.Trigger>
+        <Dialog.Overlay
+          className="bg-gray-900 bg-opacity-80 fixed inset-0"
+          asChild={true}
+        >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, delay: 0.1 }}
+          ></motion.div>
+        </Dialog.Overlay>
+        <Dialog.Content
+          className="overflow-auto h-screen w-screen fixed inset-0"
+          onOpenAutoFocus={(e) => {
+            if (!isKeyboardNav) {
+              e.preventDefault();
+            }
+          }}
+          style={{ pointerEvents: "none" }}
+        >
+          <div className="my-10 max-w-[80ch] mx-auto w-full relative pointer-events-auto">
+            <motion.div
+              className="
+                bg-gray-50 dark:bg-gray-800
+                border border-gray-100 dark:border-gray-700
+                dark:text-gray-50 
+                rounded-2xl overflow-hidden
+              "
+              layoutId={`card-container-${review.id}`}
+            >
+              <div className="flex items-center gap-6 pt-2 px-2">
+                <motion.div
+                  layoutId={`card-image-container-${review.id}`}
+                  className={`
+                    rounded-xl overflow-hidden w-1/3 flex-shrink-0 relative
+                    ${
+                      review.isBestNew &&
+                      `
+                        after:absolute after:inset-0 after:z-10
+                        after:content-[''] after:rounded-xl
+                        after:shadow-[inset_0px_0px_0px_8px_#ff3530]
+                      `
+                    }
+                  `}
+                >
+                  <Image
+                    src={review.cover.replace("_160", "_400")}
+                    height={300}
+                    width={300}
+                    alt=""
+                    layout="responsive"
+                  />
+                  <TinyScore
+                    score={review.score}
+                    isBestNew={review.isBestNew}
+                    className="absolute left-3 top-3"
+                  />
+                </motion.div>
+                <div className="flex flex-col gap-2">
+                  <motion.div layoutId={`card-artist-${review.id}`}>
+                    <ArtistList review={review} className="italic text-4xl" />
+                  </motion.div>
+                  <motion.h2
+                    layoutId={`card-title-${review.id}`}
+                    className="font-semibold text-6xl break-keep"
+                  >
+                    {review.albumTitle}
+                  </motion.h2>
+                  <div className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase h-8">
+                    <LabelList review={review} />
+                    <span>{" • "}</span>
+                    <span>{getYear(new Date(review.publishDate))}</span>
+                  </div>
                 </div>
               </div>
-              <Score
-                isBig
-                score={review.score}
-                isBestNew={review.isBestNew}
-                className="border-white"
+
+              <motion.div
+                animate
+                className="mx-auto w-[fit-content] px-6 pb-10"
+                dangerouslySetInnerHTML={{
+                  __html: `<div className="body__container">${review.reviewHtml}</div>`,
+                }}
               />
-            </div>
+
+              <Tooltip message="Close Review">
+                <Dialog.Close asChild>
+                  <button className="absolute top-0 right-0 p-3 m-1 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">
+                    <CloseIcon />
+                  </button>
+                </Dialog.Close>
+              </Tooltip>
+            </motion.div>
           </div>
-        </Dialog.Title>
-        <Dialog.Description
-          className="mx-auto w-[fit-content] px-3"
-          dangerouslySetInnerHTML={{
-            __html: `<div className="body__inner-container">${review.reviewHtml}</div>`,
-          }}
-        />
-      </Dialog.Content>
-    </Dialog.Root>
+        </Dialog.Content>
+      </Dialog.Root>
+    </AnimatePresence>
   );
 };

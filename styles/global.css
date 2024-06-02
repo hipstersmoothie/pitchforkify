@@ -44,8 +44,11 @@ body {
 
 .body__inner-container,
 .contents {
-  @apply max-w-[70ch];
   display: block;
+}
+
+.body__inner-container p {
+  @apply my-6 text-lg;
 }
 
 .body__inner-container > p:first-child:first-letter,
@@ -54,6 +57,10 @@ body {
   font-size: 6.2em;
   line-height: 1em;
   margin: -0em 0.15em -0.13em 0;
+}
+
+.review-blurb {
+  @apply text-2xl my-10;
 }
 
 .contents a {

@@ -26,6 +26,7 @@ import { PlayButton } from "./PlayButton";
 import { usePlayAlbum, useSpotifyApi } from "../utils/useSpotifyApi";
 import { PlayerStateContext } from "./PlayerControls";
 import { FavoriteButton } from "./FavoriteButton";
+import { TinyScore } from "./Score";
 
 const ReviewComponent = (review: Review & { index: number }) => {
   const playAlbum = usePlayAlbum();
@@ -198,7 +199,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
           relative z-0
           shadow-inner
           after:pointer-events-none
-          ${hasBeenPlayed && !isBeingPlayed && "opacity-30"}
+          ${hasBeenPlayed && !isBeingPlayed && "grayscale opacity-50"}
           ${
             review.isBestNew &&
             `
@@ -224,30 +225,57 @@ const ReviewComponent = (review: Review & { index: number }) => {
       >
         <div
           ref={imageWrapperRef}
-          className={`absolute inset-0 -z-1 overflow-hidden rounded-2xl border border-gray-200 border-opacity-50`}
+          className={`absolute inset-0 -z-1 rounded-2xl overflow-hidden border border-gray-200 border-opacity-50`}
         >
           <motion.div
-            animate={{ scale: mouse.isHovering ? 1.05 : 1 }}
-            transition={{ duration: 1 }}
-            className="relative"
+            variants={{
+              idle: {
+                scale: 1,
+                transition: { duration: 0.5 },
+              },
+              hovering: {
+                scale: 1.05,
+                transition: { duration: 0.5 },
+              },
+            }}
+            animate={mouse.isHovering ? "hovering" : "idle"}
+            className="relative overflow-hidden rounded-2xl"
+            layoutId={`card-container-${review.id}`}
           >
             <motion.div
-              animate={{
-                translateX:
-                  mouse.point.x && mouse.initialPoint.x
-                    ? getTranslate(mouse.point.x, mouse.initialPoint.x, centerX)
-                    : 0,
-                translateY:
-                  mouse.point.y && mouse.initialPoint.y
-                    ? getTranslate(mouse.point.y, mouse.initialPoint.y, centerY)
-                    : 0,
+              variants={{
+                idle: {
+                  translateX: 0,
+                  translateY: 0,
+                  transition: { duration: 0.5 },
+                },
+                hovering: {
+                  translateX:
+                    mouse.point.x && mouse.initialPoint.x
+                      ? getTranslate(
+                          mouse.point.x,
+                          mouse.initialPoint.x,
+                          centerX
+                        )
+                      : 0,
+                  translateY:
+                    mouse.point.y && mouse.initialPoint.y
+                      ? getTranslate(
+                          mouse.point.y,
+                          mouse.initialPoint.y,
+                          centerY
+                        )
+                      : 0,
+                  transition: { duration: 0.5 },
+                },
               }}
-              transition={{ duration: 0.5 }}
+              animate={mouse.isHovering ? "hovering" : "idle"}
+              layoutId={`card-image-container-${review.id}`}
             >
               <Image
                 src={review.cover.replace("_160", "_400")}
-                height={300}
-                width={300}
+                height={600}
+                width={600}
                 alt=""
                 layout="responsive"
               />
@@ -284,20 +312,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
                 }
               }}
             />
-            <div
-              className={`
-                text-sm 
-                ${
-                  review.isBestNew
-                    ? "bg-[#ff3530] bg-opacity-90 text-[#fae0e0]"
-                    : "bg-gray-50 bg-opacity-50"
-                }
-                backdrop-blur-sm 
-                rounded px-1.5 py-1
-              `}
-            >
-              {review.score.toFixed(1)}
-            </div>
+            <TinyScore score={review.score} isBestNew={review.isBestNew} />
           </div>
 
           {review.spotifyAlbum && (
@@ -331,10 +346,18 @@ const ReviewComponent = (review: Review & { index: number }) => {
               textShadow: "0 2px 3px rgba(0, 0, 0, 0.3)",
             }}
           >
-            <ArtistList className="italic mb-1 text-gray-100" review={review} />
-            <h2 className="font-bold text-gray-50 mb-2 text-xl">
+            <motion.div layoutId={`card-artist-${review.id}`}>
+              <ArtistList
+                className="italic mb-1 text-gray-100"
+                review={review}
+              />
+            </motion.div>
+            <motion.h2
+              layoutId={`card-title-${review.id}`}
+              className="font-bold text-gray-50 mb-2 text-xl"
+            >
               {review.albumTitle}
-            </h2>
+            </motion.h2>
             <ul className="text-[0.65rem] font-bold uppercase flex text-gray-200">
               {review.genres.map((genre) => (
                 <li

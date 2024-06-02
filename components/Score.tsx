@@ -1,12 +1,37 @@
 import makeClass from "clsx";
 
-import { BestNewBadge } from "./icons/BestNewBadge";
-
 interface ScoreProps extends React.ComponentProps<"div"> {
   score: number;
   isBestNew: boolean;
   isBig?: boolean | "responsive";
 }
+
+export const TinyScore = ({
+  score,
+  isBestNew,
+  className,
+  ...props
+}: ScoreProps) => {
+  return (
+    <div
+      className={`
+        ${className}
+        text-xs 
+        ${
+          isBestNew
+            ? "bg-[#ff3530] bg-opacity-90 text-[#fae0e0]"
+            : "bg-gray-50 bg-opacity-50"
+        }
+        backdrop-blur-sm 
+        rounded px-1.5 py-1
+        text-gray-900
+      `}
+      {...props}
+    >
+      {score.toFixed(1)}
+    </div>
+  );
+};
 
 export const Score = ({
   score,

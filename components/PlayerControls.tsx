@@ -220,13 +220,19 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
       <Tooltip message={open ? "Hide Track List" : "Show Track List"}>
         <Collapsible.Trigger
           id="track-list-toggle"
-          className="bg-white border border-b-0 border-gray-300 px-4 py-1 rounded-t-xl focus:outline-none keyboard-focus:shadow-focus"
+          className="
+            bg-gray-100 dark:bg-gray-900 
+            border border-b-0 border-gray-300 dark:border-gray-700 
+            px-4 py-1 rounded-t-xl 
+            focus:outline-none keyboard-focus:shadow-focus
+            dark:text-gray-50
+          "
         >
           {open ? <CaretDownIcon /> : <CaretUpIcon />}
         </Collapsible.Trigger>
       </Tooltip>
       <Collapsible.Content
-        className="collapsible bg-white border  bottom-0 border-gray-300 rounded-t-xl overflow-auto max-h-96"
+        className="collapsible bg-grey-100 dark:bg-gray-900 border border-b-0 border-gray-300 dark:border-gray-700 rounded-t-xl overflow-auto max-h-96"
         style={{ width: "calc(100% - 0.5rem)" }}
       >
         <DismissableLayer.DismissableLayer
@@ -236,7 +242,7 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
           {tracks.map((track, index) => (
             <div
               key={track.id}
-              className="rows group flex items-center hover:bg-gray-200 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
+              className="rows group flex items-center hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer focus:outline-none keyboard-focus:shadow-focus-inner keyboard-focus:rounded-lg"
               aria-label={`Play ${track.name}`}
               tabIndex={0}
               onClick={async () => {
@@ -278,17 +284,17 @@ const TrackSwitcher = React.memo(function TrackSwitcher({
             >
               <div className="py-2 px-4 flex items-center justify-center text-right w-12">
                 {playerState.playing && playerState.trackId === track.id ? (
-                  <PauseIcon className="fill-current text-gray-800" />
+                  <PauseIcon className="fill-current text-gray-800 dark:text-gray-200" />
                 ) : (
                   <>
-                    <span className="group-hover:hidden text-gray-500">
+                    <span className="group-hover:hidden text-gray-500 dark:text-gray-400">
                       {index + 1}
                     </span>
-                    <PlayIcon className="hidden group-hover:block fill-current text-gray-800" />
+                    <PlayIcon className="hidden group-hover:block fill-current text-gray-800 dark:text-gray-200" />
                   </>
                 )}
               </div>
-              <div className="p-2 flex-1">{track.name}</div>
+              <div className="p-2 flex-1 dark:text-gray-400">{track.name}</div>
               <div
                 className={makeClass(
                   "py-2 px-1",
@@ -454,183 +460,185 @@ export const PlayerControls = () => {
   }
 
   return (
-    <div
-      className={makeClass(
-        "bg-white h-16 m-1 rounded-md border border-gray-300 shadow-xl fixed left-0 right-0 bottom-0 grid gap-6 border-t items-center z-50",
-        open && "rounded-t-none",
-        "md:grid-cols-3 md:h-24 md:m-0 md:rounded-none"
-      )}
-    >
+    <div className={makeClass("fixed left-4 right-4 bottom-2 z-50")}>
       <TrackSwitcher
         toggleFavorite={toggleFavorite}
         open={open}
         setOpen={setOpen}
       />
-      <div className={"mx-2 flex items-center border-box my-1 md:my-0"}>
-        <ReviewContentModal
-          review={
-            reviews.find((r) => r.spotifyAlbum === playerState.album) ||
-            randomReview
-          }
-        >
-          <div
-            className={makeClass(
-              "h-12 w-12 border mr-3 md:mr-4 border-gray-300 rounded overflow-hidden",
-              "md:h-20 md:w-20 md:rounded-none",
-              "cursor-pointer focus:outline-none keyboard-focus:shadow-focus-tight keyboard-focus:rounded"
-            )}
-            tabIndex={0}
-          >
-            <Image
-              src={playerState.cover}
-              alt=""
-              height={80}
-              width={80}
-              layout="fixed"
-            />
-          </div>
-        </ReviewContentModal>
-        <div className="flex-1 min-w-0 flex items-center">
-          <div className="mr-6">
-            <div className="font-medium md:font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
-              {playerState.track}
-            </div>
-            <div className="text-sm overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
-              {playerState.artist}
-            </div>
-          </div>
-          <FavoriteButton
-            isSaved={playerState.isSaved}
-            className="p-1"
-            onClick={() => toggleFavorite(playerState.trackId)}
-          />
-        </div>
-
-        <button
-          onClick={() => player?.togglePlay()}
-          className="md:hidden w-8 self-stretch flex items-center justify-center"
-        >
-          {playerState.playing ? <PauseIcon /> : <PlayIcon />}
-        </button>
-      </div>
-
-      <ScrubberBar
-        value={currentTime}
-        max={playerState.duration}
-        onChange={(newTime) => {
-          setCurrentTime(newTime);
-          debouncedSeek(newTime);
-        }}
-        className="absolute md:hidden inset-x-2 bottom-0 h-1"
-      />
-
-      <div className="hidden md:flex flex-col items-center">
-        <div className="mb-2">
-          <Tooltip message="Prev">
-            <button
-              onClick={playPreviousTrack}
-              className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
-            >
-              <PrevIcon />
-            </button>
-          </Tooltip>
-          <Tooltip message={playerState.playing ? "Pause" : "Play"}>
-            <PlayButton
-              isPlaying={playerState.playing}
-              onClick={() => player?.togglePlay()}
-            />
-          </Tooltip>
-          <Tooltip message="Next">
-            <button
-              onClick={playNextTrack}
-              className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
-            >
-              <NextIcon />
-            </button>
-          </Tooltip>
-        </div>
-
-        <div className="flex w-full items-center gap-2">
-          <div
-            style={{ fontVariantNumeric: "tabular-nums" }}
-            className="text-sm"
-          >
-            {formatTime(currentTime / 1000)}
-          </div>
-          <ScrubberBar
-            className="relative h-5 w-full"
-            value={currentTime}
-            max={playerState.duration}
-            onChange={(newTime) => {
-              if (timeUpdateIntervale.current) {
-                clearInterval(timeUpdateIntervale.current);
-              }
-
-              setCurrentTime(newTime);
-              debouncedSeek(newTime);
-            }}
-          />
-          <div
-            style={{ fontVariantNumeric: "tabular-nums" }}
-            className="text-sm"
-          >
-            {formatTime(Number(playerState.duration) / 1000)}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-end h-full w-full p-10">
-        <Tooltip message="Open in Spotify">
-          <button
-            className="mr-4 focus:outline-none keyboard-focus:shadow-focus rounded"
-            onClick={() =>
-              window.open(
-                `https://open.spotify.com/album/${playerState.album.replace(
-                  "spotify:album:",
-                  ""
-                )}?si=kKI9SkC6TMyQ9Ks9GRvn0w`
-              )
+      <div
+        className={makeClass(
+          "bg-gray-50 dark:bg-gray-900 mb-1 shadow-xl grid gap-6 border-t items-center mx-4",
+          "rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700",
+          "md:grid-cols-3"
+        )}
+      >
+        <div className={"mx-2 flex items-center border-box my-1 md:my-0"}>
+          <ReviewContentModal
+            review={
+              reviews.find((r) => r.spotifyAlbum === playerState.album) ||
+              randomReview
             }
           >
-            <HomeIcon />
+            <div
+              className={makeClass(
+                "h-12 w-12 border mr-3 md:mr-4 border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden",
+                "md:h-20 md:w-20",
+                "cursor-pointer focus:outline-none keyboard-focus:shadow-focus-tight keyboard-focus:rounded"
+              )}
+              tabIndex={0}
+            >
+              <Image
+                src={playerState.cover}
+                alt=""
+                height={80}
+                width={80}
+                layout="fixed"
+              />
+            </div>
+          </ReviewContentModal>
+          <div className="flex-1 min-w-0 flex items-center">
+            <div className="mr-6 dark:text-gray-300">
+              <div className="font-medium md:font-semibold w-full overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
+                {playerState.track}
+              </div>
+              <div className="text-sm overflow-hidden whitespace-nowrap overflow-ellipsis min-w-0">
+                {playerState.artist}
+              </div>
+            </div>
+            <FavoriteButton
+              isSaved={playerState.isSaved}
+              className="p-1"
+              onClick={() => toggleFavorite(playerState.trackId)}
+            />
+          </div>
+
+          <button
+            onClick={() => player?.togglePlay()}
+            className="md:hidden w-8 self-stretch flex items-center justify-center"
+          >
+            {playerState.playing ? <PauseIcon /> : <PlayIcon />}
           </button>
-        </Tooltip>
-        <div className="flex items-center">
-          <Tooltip message={volume === 0 ? "Unmute" : "Mute"}>
+        </div>
+
+        <ScrubberBar
+          value={currentTime}
+          max={playerState.duration}
+          onChange={(newTime) => {
+            setCurrentTime(newTime);
+            debouncedSeek(newTime);
+          }}
+          className="absolute md:hidden inset-x-2 bottom-0 h-1"
+        />
+
+        <div className="hidden md:flex flex-col items-center">
+          <div className="mb-2">
+            <Tooltip message="Prev">
+              <button
+                onClick={playPreviousTrack}
+                className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
+              >
+                <PrevIcon />
+              </button>
+            </Tooltip>
+            <Tooltip message={playerState.playing ? "Pause" : "Play"}>
+              <PlayButton
+                isPlaying={playerState.playing}
+                onClick={() => player?.togglePlay()}
+              />
+            </Tooltip>
+            <Tooltip message="Next">
+              <button
+                onClick={playNextTrack}
+                className="text-gray-600 hover:text-gray-800 m-2 focus:outline-none keyboard-focus:shadow-focus rounded-full"
+              >
+                <NextIcon />
+              </button>
+            </Tooltip>
+          </div>
+
+          <div className="flex w-full items-center gap-2 dark:text-gray-300">
+            <div
+              style={{ fontVariantNumeric: "tabular-nums" }}
+              className="text-sm"
+            >
+              {formatTime(currentTime / 1000)}
+            </div>
+            <ScrubberBar
+              className="relative h-5 w-full"
+              value={currentTime}
+              max={playerState.duration}
+              onChange={(newTime) => {
+                if (timeUpdateIntervale.current) {
+                  clearInterval(timeUpdateIntervale.current);
+                }
+
+                setCurrentTime(newTime);
+                debouncedSeek(newTime);
+              }}
+            />
+            <div
+              style={{ fontVariantNumeric: "tabular-nums" }}
+              className="text-sm"
+            >
+              {formatTime(Number(playerState.duration) / 1000)}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end h-full w-full p-10 ">
+          <Tooltip message="Open in Spotify">
             <button
-              className="mr-2 focus:outline-none keyboard-focus:shadow-focus rounded"
-              onClick={() => {
+              className="mr-4 focus:outline-none keyboard-focus:shadow-focus rounded dark:fill-gray-300"
+              onClick={() =>
+                window.open(
+                  `https://open.spotify.com/album/${playerState.album.replace(
+                    "spotify:album:",
+                    ""
+                  )}?si=kKI9SkC6TMyQ9Ks9GRvn0w`
+                )
+              }
+            >
+              <HomeIcon />
+            </button>
+          </Tooltip>
+          <div className="flex items-center">
+            <Tooltip message={volume === 0 ? "Unmute" : "Mute"}>
+              <button
+                className="mr-2 focus:outline-none keyboard-focus:shadow-focus rounded dark:fill-gray-300"
+                onClick={() => {
+                  if (!player) {
+                    return;
+                  }
+
+                  let newVolume = volumeBeforeMute.current;
+
+                  if (volume !== 0) {
+                    volumeBeforeMute.current = volume;
+                    newVolume = 0;
+                  }
+
+                  setVolume(newVolume);
+                  player.setVolume(newVolume);
+                }}
+              >
+                <VolumeIcon volume={volume} />
+              </button>
+            </Tooltip>
+            <ScrubberBar
+              max={100}
+              value={volume * 100}
+              onChange={(newVolume) => {
                 if (!player) {
                   return;
                 }
 
-                let newVolume = volumeBeforeMute.current;
-
-                if (volume !== 0) {
-                  volumeBeforeMute.current = volume;
-                  newVolume = 0;
-                }
-
-                setVolume(newVolume);
-                player.setVolume(newVolume);
+                setVolume(newVolume / 100);
+                player.setVolume(newVolume / 100);
               }}
-            >
-              <VolumeIcon volume={volume} />
-            </button>
-          </Tooltip>
-          <ScrubberBar
-            max={100}
-            value={volume * 100}
-            onChange={(newVolume) => {
-              if (!player) {
-                return;
-              }
-
-              setVolume(newVolume / 100);
-              player.setVolume(newVolume / 100);
-            }}
-            className="relative w-[100px] h-4"
-          />
+              className="relative w-[100px] h-4"
+            />
+          </div>
         </div>
       </div>
     </div>
