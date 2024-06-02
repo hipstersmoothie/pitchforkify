@@ -37,7 +37,6 @@ export const ReviewContentModal = ({
           className="flex data-[state=open]:z-50 focus:z-50"
           asChild
           style={{ WebkitAppearance: "none" }}
-          data-review={review.id}
           onKeyDown={(e) => {
             if (e.key === " " || e.key === "Enter") {
               setOpen(true);

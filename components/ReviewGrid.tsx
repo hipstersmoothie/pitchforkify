@@ -184,6 +184,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
   return (
     <ReviewContentModal review={review}>
       <motion.article
+        data-review={review.id}
         layoutId={`card-container-${review.id}`}
         className={`
           review-item 
