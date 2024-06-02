@@ -511,7 +511,7 @@ export const ReviewGrid = ({
   useIntersectionObserver({
     target: bottomRef,
     onIntersect: fetchNextPage,
-    enabled: hasNextPage,
+    enabled: hasNextPage && !isFetching && !isRefetching,
     rootMargin: "50%",
   });
 
