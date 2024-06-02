@@ -105,7 +105,6 @@ const ReviewComponent = (review: Review & { index: number }) => {
 
     if (value < initialValue) {
       const percentage = (initialValue - value) / center;
-      console.log({ value, initialValue, center, percentage });
       return clamp(percentage, 0, 1) * 5;
     } else {
       const percentage = (value - initialValue) / center;
@@ -142,7 +141,6 @@ const ReviewComponent = (review: Review & { index: number }) => {
         height: 40,
       });
 
-      console.log("dark", contrast(color.hex) === "dark");
       isDarkImageSet(contrast(color.hex) === "dark");
     }
 
