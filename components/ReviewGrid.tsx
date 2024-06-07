@@ -184,6 +184,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
       <motion.article
         data-review={review.id}
         layoutId={`card-container-${review.id}`}
+        layout="position"
         className={`
           review-item 
           group
@@ -311,7 +312,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
                 }
               }}
             />
-            <motion.div layoutId={`card-score-${review.id}`}>
+            <motion.div layout="position" layoutId={`card-score-${review.id}`}>
               <TinyScore score={review.score} isBestNew={review.isBestNew} />
             </motion.div>
           </div>
@@ -347,7 +348,7 @@ const ReviewComponent = (review: Review & { index: number }) => {
               textShadow: "0 2px 3px rgba(0, 0, 0, 0.3)",
             }}
           >
-            <motion.div layoutId={`card-artist-${review.id}`}>
+            <motion.div layout="position" layoutId={`card-artist-${review.id}`}>
               <ArtistList
                 className="italic mb-1 text-gray-100"
                 review={review}
@@ -355,11 +356,13 @@ const ReviewComponent = (review: Review & { index: number }) => {
             </motion.div>
             <motion.h2
               layoutId={`card-title-${review.id}`}
+              layout="position"
               className="font-bold text-gray-50 mb-2 text-xl"
             >
               {review.albumTitle}
             </motion.h2>
             <motion.ul
+              layout="position"
               layoutId={`card-genres-${review.id}`}
               className="text-[0.65rem] font-bold uppercase flex text-gray-200"
             >

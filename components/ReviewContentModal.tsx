@@ -67,7 +67,7 @@ export const ReviewContentModal = ({
           }}
           style={{ pointerEvents: "none" }}
         >
-          <div className="my-10 max-w-[80ch] mx-auto w-full relative pointer-events-auto">
+          <div className="my-10 px-4 max-w-[80ch] mx-auto w-full relative pointer-events-auto">
             <motion.div
               className="
                 bg-gray-50 dark:bg-gray-800
@@ -81,45 +81,65 @@ export const ReviewContentModal = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, delay: 0.1 }}
             >
-              <div className="flex items-center gap-6 pt-2 px-2">
+              <div className="flex items-center gap-6 pt-2 px-2 z-0 relative">
                 <motion.div
                   layoutId={`card-image-container-${review.id}`}
                   className={`
-                    rounded-xl overflow-hidden w-1/3 flex-shrink-0 relative
+                    rounded-xl overflow-hidden flex-shrink-0
+                    absolute inset-0 bottom-[-75%] z-[-1]
                     ${
                       review.isBestNew &&
+                      false &&
                       `
                         after:absolute after:inset-0 after:z-10
                         after:content-[''] after:rounded-xl
                         after:shadow-[inset_0px_0px_0px_8px_#ff3530]
                       `
                     }
+
+                    after:absolute after:inset-0 after:z-10
+                    after:content-[''] after:rounded-xl
+                    after:bg-gradient-to-t after:from-gray-50 dark:after:from-gray-800
                   `}
                 >
                   <Image
                     src={review.cover.replace("_160", "_400")}
                     height={300}
                     width={300}
+                    className="w-full"
                     alt=""
                     layout="responsive"
                   />
+                </motion.div>
+                <div className="flex flex-col gap-2 pt-10 px-4 md:pt-20 md:pb-6">
                   <motion.div
                     layoutId={`card-score-${review.id}`}
-                    className="absolute left-3 top-3"
+                    className="absolute left-6 top-8"
                   >
-                    <TinyScore
-                      score={review.score}
-                      isBestNew={review.isBestNew}
-                    />
+                    <div
+                      className={` 
+                        ${
+                          review.isBestNew
+                            ? "bg-[#ff3530] bg-opacity-90 text-[#fae0e0]"
+                            : "bg-gray-50 bg-opacity-50"
+                        }
+                        backdrop-blur-sm 
+                        rounded px-2 py-1
+                        text-gray-900
+                      `}
+                    >
+                      {review.score.toFixed(1)}
+                    </div>
                   </motion.div>
-                </motion.div>
-                <div className="flex flex-col gap-2">
                   <motion.div layoutId={`card-artist-${review.id}`}>
-                    <ArtistList review={review} className="italic text-4xl" />
+                    <ArtistList
+                      review={review}
+                      className="italic text-xl md:text-4xl"
+                    />
                   </motion.div>
                   <motion.h2
                     layoutId={`card-title-${review.id}`}
-                    className="font-semibold text-6xl break-keep"
+                    className="font-semibold text-4xl md:text-6xl break-keep"
                   >
                     {review.albumTitle}
                   </motion.h2>
@@ -137,26 +157,42 @@ export const ReviewContentModal = ({
                         </li>
                       ))}
                     </motion.ul>
-                    <div className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase">
+                    <motion.div
+                      className="flex items-center gap-1 dark:text-gray-300 text-xs uppercase"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                    >
                       <LabelList review={review} />
                       <span>{" • "}</span>
                       <span>{getYear(new Date(review.publishDate))}</span>
-                    </div>
+                    </motion.div>
                   </div>
                 </div>
               </div>
 
               <motion.div
-                animate
-                className="mx-auto w-[fit-content] px-6 pb-10"
-                dangerouslySetInnerHTML={{
-                  __html: `<div className="body__container">${review.reviewHtml}</div>`,
-                }}
-              />
+                initial={{ translateY: -20 }}
+                animate={{ translateY: 0 }}
+                exit={{ translateY: 20 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="mx-auto w-[fit-content] px-6 pb-10 relative"
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8 }}
+                  dangerouslySetInnerHTML={{
+                    __html: `<div className="body__container">${review.reviewHtml}</div>`,
+                  }}
+                />
+              </motion.div>
 
               <Tooltip message="Close Review">
                 <Dialog.Close asChild>
-                  <button className="absolute top-0 right-0 p-3 m-1 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">
+                  <button className="absolute top-4 right-6 p-3 text-gray-400 hover:text-white focus:outline-none keyboard-focus:shadow-focus-tight rounded">
                     <CloseIcon />
                   </button>
                 </Dialog.Close>
