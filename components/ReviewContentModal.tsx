@@ -6,13 +6,16 @@ import { useKeyboardNavigation } from "@design-systems/hooks";
 import { CloseIcon } from "./icons/CloseIcon";
 import { Review } from "../pages/api/reviews";
 
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { TinyScore } from "./Score";
 import { Tooltip } from "./Tooltip";
 import { ArtistList } from "./ArtistList";
 import { LabelList } from "./LabelList";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { PlayButton } from "./PlayButton";
+import { PlayerStateContext } from "./PlayerControls";
+import { usePlayAlbum } from "../utils/useSpotifyApi";
 
 interface ReviewContentModalProps {
   review?: Review;
@@ -25,6 +28,9 @@ export const ReviewContentModal = ({
 }: ReviewContentModalProps) => {
   const isKeyboardNav = useKeyboardNavigation();
   const [open, setOpen] = useState(false);
+  const { playerState } = useContext(PlayerStateContext);
+  const isBeingPlayed = review && playerState.album === review.spotifyAlbum;
+  const playAlbum = usePlayAlbum();
 
   if (!review) {
     return <>{children}</>;
@@ -81,7 +87,7 @@ export const ReviewContentModal = ({
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, delay: 0.1 }}
             >
-              <div className="flex items-center gap-6 pt-2 px-2 z-0 relative">
+              <div className="flex items-center gap-6 pt-2 px-2 z-0 relative group">
                 <motion.div
                   layoutId={`card-image-container-${review.id}`}
                   className={`
@@ -111,6 +117,34 @@ export const ReviewContentModal = ({
                     layout="responsive"
                   />
                 </motion.div>
+                {review.spotifyAlbum && (
+                  <PlayButton
+                    isPlaying={isBeingPlayed ?? false}
+                    barAnimation={true}
+                    className={`
+                        absolute top-3/4 -translate-x-1/2 left-1/2 -translate-y-1/2 
+                        opacity-0 focus:opacity-100
+                        ${
+                          isBeingPlayed
+                            ? "opacity-0"
+                            : "group-hover:opacity-100 "
+                        }
+                        transition-opacity z-10
+                      `}
+                    aria-label={`Play ${review.albumTitle}`}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      playAlbum(review);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === " " || e.key === "Enter") {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        playAlbum(review);
+                      }
+                    }}
+                  />
+                )}
                 <div className="flex flex-col gap-2 pt-10 px-4 md:pt-20 md:pb-6">
                   <motion.div
                     layoutId={`card-score-${review.id}`}
